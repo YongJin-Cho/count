@@ -1,0 +1,314 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CountUIAPI",
+    "description": "UI APIs for Count Management (FR-04). These APIs serve HTML fragments for HTMX-based dynamic UI updates, supporting listing, creating, and modifying count data. All APIs return 'text/html' fragments.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Development Server"
+    }
+  ],
+  "paths": {
+    "/ui/counts": {
+      "get": {
+        "summary": "Get Count List Fragment",
+        "description": "Returns a list of count data as HTML table rows (<tr>). Triggered on load or when 'count-list-changed' event is fired on the body.",
+        "operationId": "GetCountListAPI",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of count list fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment containing <tr> elements for each count source."
+                },
+                "example": "<tr><td>source-1</td><td><span class=\"badge\">10</span></td><td>2024-05-15 12:00:00</td><td><button>...</button></td></tr>"
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create New Count",
+        "description": "Creates a new count source. On success, returns the HTML fragment for the new table row to be appended to the list.",
+        "operationId": "CreateCountAPI",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "source_id",
+                  "initial_value"
+                ],
+                "properties": {
+                  "source_id": {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]+$",
+                    "description": "Unique identifier for the count source. Only lowercase letters, numbers, and hyphens allowed."
+                  },
+                  "initial_value": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "description": "Initial count value."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully created new count row fragment",
+            "headers": {
+              "HX-Trigger": {
+                "description": "Optional: Trigger 'count-list-changed' to notify other components.",
+                "schema": {
+                  "type": "string",
+                  "example": "count-list-changed"
+                }
+              }
+            },
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for the new <tr>. Swap: beforeend, Target: #count-list."
+                },
+                "example": "<tr id=\"count-row-new-source\"><td>new-source</td><td>5</td><td>2024-05-15 12:10:00</td><td>...</td></tr>"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input data",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<div id=\"count-create-error-msg\" class=\"text-red-500\">유효하지 않은 입력값입니다.</div>"
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - Source ID already exists",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<div id=\"count-create-error-msg\" class=\"text-red-500\">이미 존재하는 ID입니다.</div>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts/new": {
+      "get": {
+        "summary": "Get Create New UI Fragment",
+        "description": "Returns the HTML fragment for the 'Create New Count' form view.",
+        "operationId": "GetCreateNewUIAPI",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of create form fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for the creation form. Target: #main-content, Swap: innerHTML."
+                },
+                "example": "<div id=\"create-form-container\"><form hx-post=\"/ui/counts\">...</form></div>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts/{source_id}": {
+      "get": {
+        "summary": "Cancel Edit and Get View Row Fragment",
+        "description": "Cancels editing and returns the read-only view of a count row.",
+        "operationId": "CancelEditCountAPI",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of view row fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for the <tr> in view mode. Target: #count-row-{source_id}, Swap: outerHTML."
+                },
+                "example": "<tr id=\"count-row-source-1\"><td>source-1</td><td>10</td><td>...</td></tr>"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update Count Value",
+        "description": "Updates the count value and returns the view row fragment.",
+        "operationId": "UpdateCountAPI",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "value"
+                ],
+                "properties": {
+                  "value": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful update and return of row fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for the updated <tr>. Target: #count-row-{source_id}, Swap: outerHTML."
+                },
+                "example": "<tr id=\"count-row-source-1\"><td>source-1</td><td>20</td><td>...</td></tr>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts/{source_id}/edit": {
+      "get": {
+        "summary": "Get Edit UI Fragment",
+        "description": "Returns the HTML fragment for the edit view of a specific count.",
+        "operationId": "GetEditCountUIAPI",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of edit form fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for editing. Target: #main-content, Swap: innerHTML."
+                },
+                "example": "<div id=\"edit-form-container\">...</div>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts/{source_id}/increment": {
+      "post": {
+        "summary": "Increment Count (+1)",
+        "description": "Increments the count by 1 and returns the updated table row fragment.",
+        "operationId": "IncrementCountAPI",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful increment and return of row fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for the updated <tr>. Target: closest tr, Swap: outerHTML."
+                },
+                "example": "<tr id=\"count-row-source-1\"><td>source-1</td><td>11</td><td>...</td></tr>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts/{source_id}/decrement": {
+      "post": {
+        "summary": "Decrement Count (-1)",
+        "description": "Decrements the count by 1 and returns the updated table row fragment. Value does not go below 0.",
+        "operationId": "DecrementCountAPI",
+        "parameters": [
+          {
+            "name": "source_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful decrement and return of row fragment",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment for the updated <tr>. Target: closest tr, Swap: outerHTML."
+                },
+                "example": "<tr id=\"count-row-source-1\"><td>source-1</td><td>9</td><td>...</td></tr>"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTMLFragment": {
+        "type": "string",
+        "description": "An HTML string representing a UI component or fragment."
+      }
+    }
+  }
+}

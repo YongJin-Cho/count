@@ -26,6 +26,9 @@ WORKDIR /root/
 # Copy binary from builder
 COPY --from=builder /app/count-api-service .
 
+# Copy templates for UI
+COPY --from=builder /app/internal/component/ui/templates ./internal/component/ui/templates
+
 # Create data directory
 RUN mkdir -p /data
 ENV STORAGE_PATH=/data/counts.log

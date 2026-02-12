@@ -81,11 +81,11 @@ func TestFileStorage_FindAll(t *testing.T) {
 		offset        int
 		expectedCount int
 	}{
-		{"All", "", 10, 0, 3},
-		{"Filter A", "A", 10, 0, 2},
+		{"All", "", 10, 0, 2},
+		{"Filter A", "A", 10, 0, 1},
 		{"Limit 1", "", 1, 0, 1},
-		{"Offset 1", "", 10, 1, 2},
-		{"Offset 2", "", 10, 2, 1},
+		{"Offset 1", "", 10, 1, 1},
+		{"Offset 2", "", 10, 2, 0},
 		{"Empty results", "C", 10, 0, 0},
 	}
 
@@ -131,8 +131,8 @@ func TestFileStorage_CountTotal(t *testing.T) {
 		filter        string
 		expectedCount int
 	}{
-		{"All", "", 3},
-		{"Filter A", "A", 2},
+		{"All", "", 2},
+		{"Filter A", "A", 1},
 		{"Filter B", "B", 1},
 		{"Filter C", "C", 0},
 	}

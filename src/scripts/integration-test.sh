@@ -87,11 +87,12 @@ fi
 
 echo "--------------------------------------------------"
 echo "Test 6: Integrated Query with Pagination (limit, offset)"
-# Use a unique external_id for this run
-TEST_ID="pagination-test-$(date +%s)"
-# Collect some more data first
-for i in {2..6}
+# Use unique external_ids for this run to test pagination across sources
+TEST_PREFIX="pagination-test-$(date +%s)"
+# Collect data for 5 different sources
+for i in {1..5}
 do
+    TEST_ID="${TEST_PREFIX}-${i}"
     curl -s -X POST ${BASE_URL}/api/v1/collect \
       -H "Host: ${HOST_HEADER}" \
       -H "Content-Type: application/json" \
@@ -102,16 +103,24 @@ done
 # Wait a bit for async event processing
 sleep 2
 
-PAGINATED_RESPONSE=$(curl -s -X GET "${BASE_URL}/api/v1/counts?external_id=${TEST_ID}&limit=2&offset=1" \
+# Query without filter to test pagination across all sources
+PAGINATED_RESPONSE=$(curl -s -X GET "${BASE_URL}/api/v1/counts?limit=2&offset=1" \
   -H "Host: ${HOST_HEADER}" \
   -H "Authorization: Bearer ${TOKEN}")
 
 echo "Paginated Response: ${PAGINATED_RESPONSE}"
-# Should have total_count: 5 (since we added 5 records) and counts array of length 2
-if [[ $PAGINATED_RESPONSE == *"total_count\":5"* ]] && [[ $PAGINATED_RESPONSE == *"counts"* ]]; then
-    echo "[PASS] Integrated query pagination test successful"
+# Should have at least 5 sources in total if we just added them, and counts array of length 2
+if [[ $PAGINATED_RESPONSE == *"total_count"* ]] && [[ $PAGINATED_RESPONSE == *"counts"* ]]; then
+    # Verify we got 2 items (counts array should have 2 elements)
+    # Simple check for number of occurrences of "external_id" in response
+    COUNT=$(echo $PAGINATED_RESPONSE | grep -o "external_id" | wc -l)
+    if [ "$COUNT" -eq 2 ]; then
+        echo "[PASS] Integrated query pagination test successful"
+    else
+        echo "[FAIL] Integrated query pagination test failed: expected 2 items, got $COUNT"
+    fi
 else
-    echo "[FAIL] Integrated query pagination test failed"
+    echo "[FAIL] Integrated query pagination test failed: invalid response format"
 fi
 
 echo "--------------------------------------------------"
@@ -139,6 +148,17 @@ if (( $(echo "$AVG_TIME < 100" | bc -l) )); then
     echo "[PASS] Performance requirement met (Avg < 100ms)"
 else
     echo "[WARN] Performance requirement not met (Avg >= 100ms)"
+fi
+
+echo "--------------------------------------------------"
+echo "Test 8: UI Endpoint Access (/ui/counts)"
+UI_RESPONSE=$(curl -s -H "Host: ${HOST_HEADER}" -H "Authorization: Bearer ${TOKEN}" ${BASE_URL}/ui/counts)
+
+if [[ $UI_RESPONSE == *"count"* ]] || [[ $UI_RESPONSE == *"table"* ]] || [[ $UI_RESPONSE == *"html"* ]]; then
+    echo "[PASS] UI endpoint returned expected content"
+else
+    echo "[FAIL] UI endpoint returned unexpected content or failed"
+    echo "Response: ${UI_RESPONSE:0:100}..."
 fi
 
 echo "--------------------------------------------------"

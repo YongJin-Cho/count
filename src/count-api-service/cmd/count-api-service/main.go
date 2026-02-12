@@ -6,10 +6,12 @@ import (
 	"count-api-service/internal/common/event"
 	"count-api-service/internal/component/collector"
 	"count-api-service/internal/component/storage"
+	"count-api-service/internal/component/ui"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 )
@@ -35,6 +37,16 @@ func main() {
 	// Collector Module
 	collectorHandler := collector.NewCollectorHandler(authProvider, bus, store)
 
+	// UI Module
+	templateDir := os.Getenv("TEMPLATE_DIR")
+	if templateDir == "" {
+		templateDir = "internal/component/ui/templates"
+	}
+	uiHandler, err := ui.NewUIHandler(collectorHandler, store, templateDir, authProvider)
+	if err != nil {
+		log.Fatalf("Failed to initialize UI handler: %v", err)
+	}
+
 	// 2. Orchestration (Routes)
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
@@ -43,6 +55,36 @@ func main() {
 	})
 	mux.HandleFunc("/api/v1/collect", collectorHandler.CollectCount)
 	mux.HandleFunc("/api/v1/counts", collectorHandler.GetCounts)
+
+	// UI Routes
+	mux.HandleFunc("/ui/counts", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/ui/counts" {
+			if r.Method == http.MethodGet {
+				uiHandler.GetCountList(w, r)
+			} else if r.Method == http.MethodPost {
+				uiHandler.CreateCount(w, r)
+			} else {
+				http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+			}
+		} else if r.URL.Path == "/ui/counts/new" {
+			uiHandler.GetCreateForm(w, r)
+		} else {
+			// Path with source_id
+			if strings.HasSuffix(r.URL.Path, "/increment") {
+				uiHandler.IncrementCount(w, r)
+			} else if strings.HasSuffix(r.URL.Path, "/decrement") {
+				uiHandler.DecrementCount(w, r)
+			} else if strings.HasSuffix(r.URL.Path, "/edit") {
+				uiHandler.GetEditForm(w, r)
+			} else if r.Method == http.MethodGet {
+				uiHandler.GetCountRow(w, r)
+			} else if r.Method == http.MethodPut {
+				uiHandler.UpdateCount(w, r)
+			} else {
+				http.Error(w, "Not found", http.StatusNotFound)
+			}
+		}
+	})
 
 	port := os.Getenv("PORT")
 	if port == "" {

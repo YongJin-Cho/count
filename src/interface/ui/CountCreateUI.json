@@ -1,0 +1,148 @@
+{
+  "ui_id": "CountCreateUI",
+  "name": "카운트 생성 폼",
+  "layout": "stack",
+  "description": "새로운 카운트 소스를 등록하기 위한 입력 폼 섹션",
+  "components": [
+    {
+      "id": "count-create-section",
+      "type": "Section",
+      "style": {
+        "padding": "20px",
+        "border": "1px solid #ddd",
+        "border_radius": "8px",
+        "background": "#f9f9f9"
+      },
+      "components": [
+        {
+          "id": "count-create-title",
+          "type": "Typography",
+          "variant": "h2",
+          "content": "새 카운트 생성"
+        },
+        {
+          "id": "count-create-form",
+          "type": "Form",
+          "props": {
+            "method": "POST",
+            "action": "/ui/counts"
+          },
+          "components": [
+            {
+              "id": "field-source-id-group",
+              "type": "FormGroup",
+              "label": "소스 식별자 (Source ID)",
+              "components": [
+                {
+                  "id": "input-source-id",
+                  "type": "Input",
+                  "props": {
+                    "name": "source_id",
+                    "type": "text",
+                    "placeholder": "예: my-service-api-calls",
+                    "required": true,
+                    "pattern": "[a-z0-9-]+"
+                  },
+                  "description": "영문 소문자, 숫자, 하이픈(-)만 허용됩니다.",
+                  "validation_error_msg": "형식이 올바르지 않습니다. (영문 소문자, 숫자, 하이픈만 가능)"
+                }
+              ]
+            },
+            {
+              "id": "field-initial-value-group",
+              "type": "FormGroup",
+              "label": "초기값",
+              "components": [
+                {
+                  "id": "input-initial-value",
+                  "type": "Input",
+                  "props": {
+                    "name": "initial_value",
+                    "type": "number",
+                    "value": "0",
+                    "min": 0,
+                    "required": true
+                  }
+                }
+              ]
+            },
+            {
+              "id": "count-create-error-msg",
+              "type": "Alert",
+              "props": {
+                "variant": "danger",
+                "id": "count-create-error-msg"
+              },
+              "style": {
+                "display": "none",
+                "margin_top": "10px",
+                "color": "#d9534f"
+              },
+              "content": ""
+            },
+            {
+              "id": "count-create-actions",
+              "type": "ButtonGroup",
+              "style": {
+                "margin_top": "20px",
+                "gap": "10px",
+                "display": "flex"
+              },
+              "components": [
+                {
+                  "id": "btn-save",
+                  "type": "Button",
+                  "label": "저장",
+                  "props": {
+                    "type": "submit",
+                    "variant": "primary"
+                  },
+                  "htmx_spec": {
+                    "hx_post": "/ui/counts",
+                    "hx_trigger": "click",
+                    "hx_target": "#count-list",
+                    "hx_swap": "beforeend",
+                    "hx_indicator": "#create-loading-indicator",
+                    "hx_on::before_request": "document.querySelector('#count-create-error-msg').style.display = 'none';",
+                    "hx_on::error": "document.querySelector('#count-create-error-msg').innerText = '요청을 처리할 수 없습니다. (중복 ID 또는 서버 오류)'; document.querySelector('#count-create-error-msg').style.display = 'block';",
+                    "hx_on::after_request": "if(event.detail.successful) { document.querySelector('#count-create-form').reset(); }"
+                  }
+                },
+                {
+                  "id": "btn-cancel",
+                  "type": "Button",
+                  "label": "취소",
+                  "props": {
+                    "type": "button",
+                    "variant": "secondary"
+                  },
+                  "actions": [
+                    {
+                      "type": "reset-form",
+                      "target": "#count-create-form"
+                    },
+                    {
+                      "type": "hide-error",
+                      "target": "#count-create-error-msg"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "create-loading-indicator",
+          "type": "Spinner",
+          "props": {
+            "id": "create-loading-indicator"
+          },
+          "style": {
+            "display": "none"
+          },
+          "class": "htmx-indicator"
+        }
+      ]
+    }
+  ]
+}

@@ -69,6 +69,26 @@ spec:
           port: 80
 
 ---
+# HTTPRoute for CountUIAPI
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: count-api-ui-route
+  namespace: count-collection-system
+spec:
+  parentRefs:
+    - name: count-collection-gateway
+      namespace: count-collection-system
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /ui/counts
+      backendRefs:
+        - name: count-api-service
+          port: 80
+
+---
 # HTTPRoute for Health Check
 apiVersion: gateway.networking.k8s.io/v1beta1
 kind: HTTPRoute

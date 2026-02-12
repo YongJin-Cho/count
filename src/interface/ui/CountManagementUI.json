@@ -1,0 +1,143 @@
+{
+  "ui_id": "CountManagementUI",
+  "name": "카운트 목록 조회",
+  "layout": "stack",
+  "description": "전체 카운트 목록을 테이블 형태로 조회하고, 각 항목의 값을 수동으로 증감하거나 상세 수정을 위한 화면으로 진입할 수 있는 메인 관리 화면입니다.",
+  "components": [
+    {
+      "id": "ui-header",
+      "type": "Header",
+      "props": {
+        "title": "Count Management",
+        "level": 1
+      }
+    },
+    {
+      "id": "action-toolbar",
+      "type": "Container",
+      "props": {
+        "flex_direction": "row",
+        "justify_content": "flex-end",
+        "margin_bottom": "20px"
+      },
+      "components": [
+        {
+          "id": "btn-create-new",
+          "type": "Button",
+          "props": {
+            "label": "신규 생성",
+            "variant": "primary"
+          },
+          "htmx_spec": {
+            "hx_get": "/ui/counts/new",
+            "hx_trigger": "click",
+            "hx_target": "#main-content",
+            "hx_swap": "innerHTML",
+            "hx_push_url": "true",
+            "hx_indicator": "#loading-indicator"
+          }
+        }
+      ]
+    },
+    {
+      "id": "count-list-table-container",
+      "type": "TableContainer",
+      "props": {
+        "elevation": 1
+      },
+      "components": [
+        {
+          "id": "count-list-table",
+          "type": "Table",
+          "props": {
+            "headers": ["Source ID", "Current Count", "Last Updated", "Actions"]
+          },
+          "htmx_spec": {
+            "hx_get": "/ui/counts",
+            "hx_trigger": "load, count-list-changed from:body",
+            "hx_target": "#count-list-body",
+            "hx_swap": "innerHTML"
+          },
+          "components": [
+            {
+              "id": "count-list-body",
+              "type": "Container",
+              "description": "서버에서 반환되는 <tr> 목록이 렌더링되는 영역입니다.",
+              "dynamic_content": true,
+              "row_definition": {
+                "id": "count-row-${source_id}",
+                "type": "TableRow",
+                "cells": [
+                  { "key": "source_id", "value": "${source_id}", "type": "Text" },
+                  { "key": "current_count", "value": "${current_count}", "type": "Badge" },
+                  { "key": "last_updated", "value": "${last_updated}", "type": "DateTime" },
+                  {
+                    "key": "actions",
+                    "type": "ActionGroup",
+                    "components": [
+                      {
+                        "id": "btn-increment-${source_id}",
+                        "type": "Button",
+                        "props": { "label": "+1", "size": "small" },
+                        "htmx_spec": {
+                          "hx_post": "/ui/counts/${source_id}/increment",
+                          "hx_trigger": "click",
+                          "hx_target": "closest tr",
+                          "hx_swap": "outerHTML"
+                        }
+                      },
+                      {
+                        "id": "btn-decrement-${source_id}",
+                        "type": "Button",
+                        "props": { "label": "-1", "size": "small" },
+                        "htmx_spec": {
+                          "hx_post": "/ui/counts/${source_id}/decrement",
+                          "hx_trigger": "click",
+                          "hx_target": "closest tr",
+                          "hx_swap": "outerHTML"
+                        }
+                      },
+                      {
+                        "id": "btn-edit-${source_id}",
+                        "type": "Button",
+                        "props": { "label": "수정", "size": "small", "variant": "outline" },
+                        "htmx_spec": {
+                          "hx_get": "/ui/counts/${source_id}/edit",
+                          "hx_trigger": "click",
+                          "hx_target": "#main-content",
+                          "hx_swap": "innerHTML",
+                          "hx_push_url": "true"
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "loading-indicator",
+      "type": "Spinner",
+      "props": {
+        "class": "htmx-indicator",
+        "style": "display: none;"
+      }
+    },
+    {
+      "id": "error-toast",
+      "type": "Toast",
+      "props": {
+        "variant": "error",
+        "visible": false
+      },
+      "htmx_spec": {
+        "hx_trigger": "htmx:responseError from:body",
+        "hx_target": "this",
+        "hx_swap": "innerHTML"
+      }
+    }
+  ]
+}

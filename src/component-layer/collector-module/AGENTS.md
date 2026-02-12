@@ -43,6 +43,19 @@
         - Return 200 OK with the retrieved data.
         - If no records found for `external_id`, return `total_count: 0` and empty `counts` list.
 
+    ### Management (Internal)
+    1. **CreateCount**: 
+        - Validate `source_id` format (`^[a-z0-9-]+$`).
+        - Check if `source_id` already exists via `storage-module`.
+        - If not exists, call `storage-module.Create`.
+    2. **Increment/Decrement**:
+        - Retrieve current value from `storage-module`.
+        - Update value (+1 or -1, min 0).
+        - Call `storage-module.UpdateValue`.
+    3. **UpdateCount**:
+        - Validate value >= 0.
+        - Call `storage-module.UpdateValue`.
+
 ## 4. Dependencies
 - **Reference Modules**:
     - `component-layer/storage-module` (src/component-layer/storage-module)

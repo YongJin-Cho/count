@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"sync"
+	"time"
 )
 
 type FileStorage struct {
@@ -56,6 +57,7 @@ func (s *FileStorage) persist(ev event.CountCollectedEvent) error {
 }
 
 // FindAll retrieves paginated count records, optionally filtered by external_id.
+// It returns the latest value for each external_id.
 func (s *FileStorage) FindAll(filter string, limit int, offset int) ([]model.CountItem, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -69,9 +71,11 @@ func (s *FileStorage) FindAll(filter string, limit int, offset int) ([]model.Cou
 	}
 	defer f.Close()
 
-	var counts []model.CountItem
+	// Use a map to keep track of the latest record for each external_id
+	latestCounts := make(map[string]model.CountItem)
+	var orderedIDs []string
+
 	scanner := bufio.NewScanner(f)
-	matchCount := 0
 	for scanner.Scan() {
 		var ev event.CountCollectedEvent
 		if err := json.Unmarshal(scanner.Bytes(), &ev); err != nil {
@@ -82,17 +86,59 @@ func (s *FileStorage) FindAll(filter string, limit int, offset int) ([]model.Cou
 			continue
 		}
 
-		if matchCount >= offset && len(counts) < limit {
-			counts = append(counts, model.CountItem{
+		item := model.CountItem{
+			ExternalID: ev.ExternalID,
+			Count:      ev.Count,
+			UpdatedAt:  ev.Timestamp,
+		}
+
+		if _, exists := latestCounts[ev.ExternalID]; !exists {
+			orderedIDs = append(orderedIDs, ev.ExternalID)
+		}
+		latestCounts[ev.ExternalID] = item
+	}
+
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("scanner error: %w", err)
+	}
+
+	// Apply pagination on the unique list
+	var result []model.CountItem
+	for i := offset; i < len(orderedIDs) && len(result) < limit; i++ {
+		result = append(result, latestCounts[orderedIDs[i]])
+	}
+
+	return result, nil
+}
+
+// FindById retrieves a specific count record by its Source ID (ExternalID).
+func (s *FileStorage) FindById(id string) (*model.CountItem, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	f, err := os.Open(s.filePath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, fmt.Errorf("record not found: %s", id)
+		}
+		return nil, fmt.Errorf("could not open file: %w", err)
+	}
+	defer f.Close()
+
+	var latest *model.CountItem
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		var ev event.CountCollectedEvent
+		if err := json.Unmarshal(scanner.Bytes(), &ev); err != nil {
+			continue
+		}
+
+		if ev.ExternalID == id {
+			latest = &model.CountItem{
 				ExternalID: ev.ExternalID,
 				Count:      ev.Count,
 				UpdatedAt:  ev.Timestamp,
-			})
-		}
-		matchCount++
-
-		if len(counts) >= limit {
-			break
+			}
 		}
 	}
 
@@ -100,10 +146,14 @@ func (s *FileStorage) FindAll(filter string, limit int, offset int) ([]model.Cou
 		return nil, fmt.Errorf("scanner error: %w", err)
 	}
 
-	return counts, nil
+	if latest == nil {
+		return nil, fmt.Errorf("record not found: %s", id)
+	}
+
+	return latest, nil
 }
 
-// CountTotal returns the total number of records matching the filter.
+// CountTotal returns the total number of unique records matching the filter.
 func (s *FileStorage) CountTotal(filter string) (int, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -117,27 +167,47 @@ func (s *FileStorage) CountTotal(filter string) (int, error) {
 	}
 	defer f.Close()
 
-	count := 0
+	uniqueIDs := make(map[string]bool)
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
-		if filter == "" {
-			count++
-			continue
-		}
-
 		var ev event.CountCollectedEvent
 		if err := json.Unmarshal(scanner.Bytes(), &ev); err != nil {
 			continue
 		}
 
-		if ev.ExternalID == filter {
-			count++
+		if filter != "" && ev.ExternalID != filter {
+			continue
 		}
+
+		uniqueIDs[ev.ExternalID] = true
 	}
 
 	if err := scanner.Err(); err != nil {
 		return 0, fmt.Errorf("scanner error: %w", err)
 	}
 
-	return count, nil
+	return len(uniqueIDs), nil
+}
+
+// Create persists a new count record.
+func (s *FileStorage) Create(item model.CountItem) error {
+	ev := event.CountCollectedEvent{
+		ExternalID: item.ExternalID,
+		Count:      item.Count,
+		Timestamp:  time.Now().Format(time.RFC3339),
+	}
+	if item.UpdatedAt != "" {
+		ev.Timestamp = item.UpdatedAt
+	}
+	return s.persist(ev)
+}
+
+// UpdateValue updates the count value for a specific Source ID.
+func (s *FileStorage) UpdateValue(id string, value int) error {
+	ev := event.CountCollectedEvent{
+		ExternalID: id,
+		Count:      value,
+		Timestamp:  time.Now().Format(time.RFC3339),
+	}
+	return s.persist(ev)
 }

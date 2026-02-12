@@ -5,7 +5,9 @@ import (
 	"count-api-service/internal/common/event"
 	"count-api-service/internal/common/model"
 	"encoding/json"
+	"fmt"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +15,10 @@ import (
 
 type Repository interface {
 	FindAll(filter string, limit int, offset int) ([]model.CountItem, error)
+	FindById(id string) (*model.CountItem, error)
 	CountTotal(filter string) (int, error)
+	Create(item model.CountItem) error
+	UpdateValue(id string, value int) error
 }
 
 type CollectorHandler struct {
@@ -171,4 +176,66 @@ func (h *CollectorHandler) GetCounts(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(resp)
+}
+
+// Internal Management Methods
+
+func (h *CollectorHandler) CreateCount(sourceID string, initialValue int) error {
+	// Validate source_id format (^[a-z0-9-]+$)
+	re := regexp.MustCompile("^[a-z0-9-]+$")
+	if !re.MatchString(sourceID) {
+		return fmt.Errorf("invalid source_id format: %s", sourceID)
+	}
+
+	// Check if already exists
+	_, err := h.repo.FindById(sourceID)
+	if err == nil {
+		return fmt.Errorf("source_id already exists: %s", sourceID)
+	}
+
+	return h.repo.Create(model.CountItem{
+		ExternalID: sourceID,
+		Count:      initialValue,
+	})
+}
+
+func (h *CollectorHandler) IncrementCount(sourceID string) (*model.CountItem, error) {
+	item, err := h.repo.FindById(sourceID)
+	if err != nil {
+		return nil, err
+	}
+
+	newValue := item.Count + 1
+	err = h.repo.UpdateValue(sourceID, newValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.repo.FindById(sourceID)
+}
+
+func (h *CollectorHandler) DecrementCount(sourceID string) (*model.CountItem, error) {
+	item, err := h.repo.FindById(sourceID)
+	if err != nil {
+		return nil, err
+	}
+
+	newValue := item.Count - 1
+	if newValue < 0 {
+		newValue = 0
+	}
+
+	err = h.repo.UpdateValue(sourceID, newValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return h.repo.FindById(sourceID)
+}
+
+func (h *CollectorHandler) UpdateCount(sourceID string, value int) error {
+	if value < 0 {
+		return fmt.Errorf("invalid value: %d", value)
+	}
+	return h.repo.UpdateValue(sourceID, value)
 }

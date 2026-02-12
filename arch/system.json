@@ -19,14 +19,40 @@
             "name": "CountReadAPI",
             "type": "API",
             "description": "Internal API to read count data from storage with pagination support"
+        },
+        {
+            "name": "CountUIAPI",
+            "type": "API",
+            "description": "UI-facing API providing HTMX fragments for count management"
+        },
+        {
+            "name": "CountManagementAPI",
+            "type": "API",
+            "description": "Internal API for managing count source metadata and manual value adjustments"
         }
     ],
     "components": [
         {
             "type": "MSA.Component",
+            "name": "CountUIHandler",
+            "description": "Handles UI-related requests by serving HTMX-compatible responses. Orchestrates data retrieval via CountReadAPI and updates via CountManagementAPI.",
+            "providing-interfaces": ["CountUIAPI"],
+            "required-interfaces": ["CountReadAPI", "CountManagementAPI"],
+            "properties": [
+                {
+                    "container": {
+                        "image": "count-api-service",
+                        "cpu": "200m",
+                        "memory": "256Mi"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "MSA.Component",
             "name": "CountCollector",
-            "description": "Receives count data via External API and emits internal events for processing. Provides a paginated query interface (limit, offset) by reading from storage to handle large datasets (QR-04).",
-            "providing-interfaces": ["CountCollectAPI", "CountCollectedEvent", "CountQueryAPI"],
+            "description": "Receives count data via External API and emits internal events for processing. Provides a paginated query interface and a management interface for UI-driven changes.",
+            "providing-interfaces": ["CountCollectAPI", "CountCollectedEvent", "CountQueryAPI", "CountManagementAPI"],
             "required-interfaces": ["CountReadAPI"],
             "properties": [
                 {
@@ -59,11 +85,12 @@
             "type": "MSA.Service",
             "name": "count-api-service",
             "description": "Microservice for count collection and query. Uses event-driven internal architecture for scalability.",
-            "providing-interfaces": ["CountCollectAPI", "CountQueryAPI"],
+            "providing-interfaces": ["CountCollectAPI", "CountQueryAPI", "CountUIAPI"],
             "required-interfaces": [],
             "components": {
                 "collector": "CountCollector",
-                "storage": "CountStorage"
+                "storage": "CountStorage",
+                "ui": "CountUIHandler"
             },
             "connectors": [
                 {
@@ -75,6 +102,16 @@
                     "from": "collector",
                     "to": "storage",
                     "interface": "CountReadAPI"
+                },
+                {
+                    "from": "ui",
+                    "to": "storage",
+                    "interface": "CountReadAPI"
+                },
+                {
+                    "from": "ui",
+                    "to": "collector",
+                    "interface": "CountManagementAPI"
                 }
             ]
         },
@@ -82,7 +119,7 @@
             "type": "MSA.System",
             "name": "CountCollectionSystem",
             "description": "System for collecting and managing external count metrics.",
-            "providing-interfaces": ["CountCollectAPI", "CountQueryAPI"],
+            "providing-interfaces": ["CountCollectAPI", "CountQueryAPI", "CountUIAPI"],
             "required-interfaces": [],
             "components": {
                 "api": "count-api-service"

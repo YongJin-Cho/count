@@ -29,6 +29,10 @@
                 {
                     "name": "storage-module",
                     "description": "Handles persistence and retrieval of count data. Includes repository for storage access."
+                },
+                {
+                    "name": "ui-module",
+                    "description": "Handles UI-related requests and serves HTMX templates. Includes UI handlers and HTML template files."
                 }
             ]
         },
@@ -38,7 +42,7 @@
             "modules": [
                 {
                     "name": "count-api-service-module",
-                    "description": "Aggregates collector and storage components into a single executable service",
+                    "description": "Aggregates collector, storage, and UI components into a single executable service",
                     "properties": [
                         {
                             "output": {
@@ -61,8 +65,28 @@
             "to": "component-layer/storage-module"
         },
         {
+            "from": "service-layer/count-api-service-module",
+            "to": "component-layer/ui-module"
+        },
+        {
             "from": "component-layer/collector-module",
             "to": "component-layer/storage-module"
+        },
+        {
+            "from": "component-layer/ui-module",
+            "to": "component-layer/collector-module"
+        },
+        {
+            "from": "component-layer/ui-module",
+            "to": "component-layer/storage-module"
+        },
+        {
+            "from": "component-layer/ui-module",
+            "to": "common-layer/model-module"
+        },
+        {
+            "from": "component-layer/ui-module",
+            "to": "common-layer/auth-module"
         },
         {
             "from": "component-layer/collector-module",

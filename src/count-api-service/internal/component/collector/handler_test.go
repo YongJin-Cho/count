@@ -6,6 +6,7 @@ import (
 	"count-api-service/internal/common/event"
 	"count-api-service/internal/common/model"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -49,6 +50,15 @@ func (m *mockRepository) FindAll(filter string, limit int, offset int) ([]model.
 	return filtered[offset:end], nil
 }
 
+func (m *mockRepository) FindById(id string) (*model.CountItem, error) {
+	for _, item := range m.items {
+		if item.ExternalID == id {
+			return &item, nil
+		}
+	}
+	return nil, fmt.Errorf("not found: %s", id)
+}
+
 func (m *mockRepository) CountTotal(filter string) (int, error) {
 	count := 0
 	for _, item := range m.items {
@@ -57,6 +67,26 @@ func (m *mockRepository) CountTotal(filter string) (int, error) {
 		}
 	}
 	return count, nil
+}
+
+func (m *mockRepository) Create(item model.CountItem) error {
+	m.items = append(m.items, item)
+	return nil
+}
+
+func (m *mockRepository) UpdateValue(id string, value int) error {
+	found := false
+	for i, item := range m.items {
+		if item.ExternalID == id {
+			m.items[i].Count = value
+			m.items[i].UpdatedAt = time.Now().Format(time.RFC3339)
+			found = true
+		}
+	}
+	if !found {
+		return fmt.Errorf("not found: %s", id)
+	}
+	return nil
 }
 
 func generateToken(permissions []string) string {
