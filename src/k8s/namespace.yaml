@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: count-collection-system
-  labels:
-    name: count-collection-system
