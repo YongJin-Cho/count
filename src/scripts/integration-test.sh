@@ -3,7 +3,7 @@ set -e
 
 # Integration Test Script for Count API Service
 BASE_URL="${BASE_URL:-http://localhost}"
-HOST_HEADER="count-api.local"
+HOST_HEADER="localhost"
 NAMESPACE="count-collection-system"
 
 echo "Starting integration tests against ${BASE_URL} (Host: ${HOST_HEADER})..."
