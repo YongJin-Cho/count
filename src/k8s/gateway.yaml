@@ -40,12 +40,51 @@ spec:
   rules:
     - matches:
         - path:
-            type: PathPrefix
+            type: Exact
             value: /api/v1/collect
           method: POST
+      backendRefs:
+        - name: count-api-service
+          port: 80
+
+---
+# HTTPRoute for CountQueryAPI
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: count-api-query-route
+  namespace: count-collection-system
+spec:
+  parentRefs:
+    - name: count-collection-gateway
+      namespace: count-collection-system
+  rules:
+    - matches:
         - path:
-            type: PathPrefix
+            type: Exact
+            value: /api/v1/counts
+          method: GET
+      backendRefs:
+        - name: count-api-service
+          port: 80
+
+---
+# HTTPRoute for Health Check
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: count-api-health-route
+  namespace: count-collection-system
+spec:
+  parentRefs:
+    - name: count-collection-gateway
+      namespace: count-collection-system
+  rules:
+    - matches:
+        - path:
+            type: Exact
             value: /health
+          method: GET
       backendRefs:
         - name: count-api-service
           port: 80

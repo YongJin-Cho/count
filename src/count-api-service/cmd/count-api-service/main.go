@@ -33,7 +33,7 @@ func main() {
 	authProvider := auth.NewAuthProvider()
 
 	// Collector Module
-	collectorHandler := collector.NewCollectorHandler(authProvider, bus)
+	collectorHandler := collector.NewCollectorHandler(authProvider, bus, store)
 
 	// 2. Orchestration (Routes)
 	mux := http.NewServeMux()
@@ -42,6 +42,7 @@ func main() {
 		w.Write([]byte("OK"))
 	})
 	mux.HandleFunc("/api/v1/collect", collectorHandler.CollectCount)
+	mux.HandleFunc("/api/v1/counts", collectorHandler.GetCounts)
 
 	port := os.Getenv("PORT")
 	if port == "" {

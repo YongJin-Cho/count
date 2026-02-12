@@ -7,6 +7,7 @@ HOST_HEADER="count-api.local"
 NAMESPACE="count-collection-system"
 
 echo "Starting integration tests against ${BASE_URL} (Host: ${HOST_HEADER})..."
+sleep 5
 
 # Function to generate JWT token
 generate_token() {
@@ -72,7 +73,49 @@ else
 fi
 
 echo "--------------------------------------------------"
-echo "Test 5: Benchmark (Simple)"
+echo "Test 5: Integrated Query (GET /api/v1/counts)"
+QUERY_RESPONSE=$(curl -s -X GET "${BASE_URL}/api/v1/counts?limit=5" \
+  -H "Host: ${HOST_HEADER}" \
+  -H "Authorization: Bearer ${TOKEN}")
+
+echo "Response: ${QUERY_RESPONSE}"
+if [[ $QUERY_RESPONSE == *"total_count"* ]] && [[ $QUERY_RESPONSE == *"counts"* ]]; then
+    echo "[PASS] Integrated query basic test successful"
+else
+    echo "[FAIL] Integrated query basic test failed"
+fi
+
+echo "--------------------------------------------------"
+echo "Test 6: Integrated Query with Pagination (limit, offset)"
+# Use a unique external_id for this run
+TEST_ID="pagination-test-$(date +%s)"
+# Collect some more data first
+for i in {2..6}
+do
+    curl -s -X POST ${BASE_URL}/api/v1/collect \
+      -H "Host: ${HOST_HEADER}" \
+      -H "Content-Type: application/json" \
+      -H "Authorization: Bearer ${TOKEN}" \
+      -d "{\"external_id\": \"${TEST_ID}\", \"count\": $i}" > /dev/null
+done
+
+# Wait a bit for async event processing
+sleep 2
+
+PAGINATED_RESPONSE=$(curl -s -X GET "${BASE_URL}/api/v1/counts?external_id=${TEST_ID}&limit=2&offset=1" \
+  -H "Host: ${HOST_HEADER}" \
+  -H "Authorization: Bearer ${TOKEN}")
+
+echo "Paginated Response: ${PAGINATED_RESPONSE}"
+# Should have total_count: 5 (since we added 5 records) and counts array of length 2
+if [[ $PAGINATED_RESPONSE == *"total_count\":5"* ]] && [[ $PAGINATED_RESPONSE == *"counts"* ]]; then
+    echo "[PASS] Integrated query pagination test successful"
+else
+    echo "[FAIL] Integrated query pagination test failed"
+fi
+
+echo "--------------------------------------------------"
+echo "Test 7: Benchmark (Simple)"
 echo "Performing 100 requests to measure average response time..."
 
 START_TIME=$(date +%s%3N)

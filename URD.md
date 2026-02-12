@@ -11,7 +11,9 @@
 - **[UR-05]** 클라우드 네이티브 환경에서의 유연한 확장과 효율적인 운영을 위해 Kubernetes 기반의 인프라 환경을 활용한다. (Ref: Issue #71e94b3)
 - **[UR-06]** 실시간 데이터 수집의 병목을 방지하기 위해 API 응답 지연 시간은 P95 기준 200ms 이내로 유지해야 한다. (Ref: Issue #71e94b3)
 - **[UR-07]** 서비스의 지속성을 위해 연간 99.9% 이상의 가용성을 목표로 한다. (Ref: Issue #71e94b3)
+- **[UR-08]** 수집된 여러 외부 소스의 count 값을 통합하여 조회할 수 있는 기능을 제공해야 하며, 소스별 또는 전체 통합 count를 확인할 수 있어야 한다. (Ref: Issue #1aeddeb)
 
 ## 3. Change History Summary (Decision Log)
+- **2026-02-12**: 통합 count 조회 기능 요구사항 ([UR-08]) 추가. (Issue #1aeddeb)
 - **2026-02-12**: Requirement Validator의 피드백을 반영하여 기술 스택(Go, K8s), 인증 방식(Bearer Token) 구체화 및 품질 요구사항(성능, 가용성) 추가 정의. (Issue #71e94b3)
 - **2026-02-12**: 신규 생성 및 외부 count 수집 API 요구사항 ([UR-01], [UR-02], [UR-03]) 정의. (Issue #71e94b3)

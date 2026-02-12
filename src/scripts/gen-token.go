@@ -15,7 +15,7 @@ type Claims struct {
 
 func main() {
 	claims := Claims{
-		Permissions: []string{"collect"},
+		Permissions: []string{"collect", "query"},
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 			Issuer:    "test",

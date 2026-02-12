@@ -1,0 +1,176 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CountQueryAPI",
+    "description": "Integrated Count Query API (FR-03). Allows querying of integrated totals and per-source count data with pagination.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Development Server"
+    }
+  ],
+  "paths": {
+    "/api/v1/counts": {
+      "get": {
+        "summary": "Query integrated counts",
+        "description": "Returns total count and list of individual counts by source. Supports filtering by external_id and pagination.",
+        "operationId": "getCounts",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "external_id",
+            "in": "query",
+            "required": false,
+            "description": "Filter by specific external source identifier.",
+            "schema": {
+              "type": "string"
+                }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of items to return.",
+            "schema": {
+              "type": "integer",
+              "default": 10,
+              "minimum": 1
+                }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Number of items to skip before starting to collect the result set.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0
+                }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Bearer token is missing or invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "unauthorized",
+                  "message": "Full authentication is required to access this resource"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "internal_server_error",
+                  "message": "An unexpected error occurred while processing the request"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "CountListResponse": {
+        "type": "object",
+        "required": [
+          "total_count",
+          "counts"
+        ],
+        "properties": {
+          "total_count": {
+            "type": "integer",
+            "description": "The total number of counts matching the criteria, ignoring limit and offset.",
+            "example": 105
+          },
+          "counts": {
+            "type": "array",
+            "description": "The list of count records for the current page.",
+            "items": {
+              "$ref": "#/components/schemas/CountItem"
+            }
+          }
+        }
+      },
+      "CountItem": {
+        "type": "object",
+        "required": [
+          "external_id",
+          "count",
+          "updated_at"
+        ],
+        "properties": {
+          "external_id": {
+            "type": "string",
+            "description": "Identifier of the external system source.",
+            "example": "source-A"
+          },
+          "count": {
+            "type": "integer",
+            "description": "Current count value for this source.",
+            "example": 42
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when this count was last updated.",
+            "example": "2024-05-15T12:00:00Z"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Machine-readable error code."
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message."
+          }
+        }
+      }
+    }
+  }
+}

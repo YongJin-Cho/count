@@ -24,11 +24,11 @@
             "modules": [
                 {
                     "name": "collector-module",
-                    "description": "Logic for receiving external count data and emitting internal events"
+                    "description": "Handles count data collection and query requests. Includes collection/query handlers and use cases."
                 },
                 {
                     "name": "storage-module",
-                    "description": "Logic for persisting count data to storage"
+                    "description": "Handles persistence and retrieval of count data. Includes repository for storage access."
                 }
             ]
         },
@@ -58,6 +58,10 @@
         },
         {
             "from": "service-layer/count-api-service-module",
+            "to": "component-layer/storage-module"
+        },
+        {
+            "from": "component-layer/collector-module",
             "to": "component-layer/storage-module"
         },
         {

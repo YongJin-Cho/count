@@ -31,3 +31,16 @@ type CountData struct {
 	Count      int       `json:"count"`
 	Timestamp  time.Time `json:"timestamp"`
 }
+
+// CountItem is the model for an individual count record in query responses.
+type CountItem struct {
+	ExternalID string `json:"external_id"`
+	Count      int    `json:"count"`
+	UpdatedAt  string `json:"updated_at"`
+}
+
+// CountListResponse is the DTO for the integrated query response.
+type CountListResponse struct {
+	TotalCount int         `json:"total_count"`
+	Counts     []CountItem `json:"counts"`
+}
