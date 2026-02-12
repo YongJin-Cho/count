@@ -1,0 +1,51 @@
+# GatewayClass
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: GatewayClass
+metadata:
+  name: kong
+  annotations:
+    konghq.com/gatewayclass-unmanaged: 'true'
+spec:
+  controllerName: konghq.com/kic-gateway-controller
+
+---
+# Gateway
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: Gateway
+metadata:
+  name: count-collection-gateway
+  namespace: count-collection-system
+spec:
+  gatewayClassName: kong
+  listeners:
+    - name: proxy
+      protocol: HTTP
+      port: 80
+      hostname: "count-api.local"
+      allowedRoutes:
+        namespaces:
+          from: All
+
+---
+# HTTPRoute for CountCollectAPI
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: count-api-collect-route
+  namespace: count-collection-system
+spec:
+  parentRefs:
+    - name: count-collection-gateway
+      namespace: count-collection-system
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/collect
+          method: POST
+        - path:
+            type: PathPrefix
+            value: /health
+      backendRefs:
+        - name: count-api-service
+          port: 80

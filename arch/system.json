@@ -1,0 +1,77 @@
+{
+    "interfaces": [
+        {
+            "name": "CountCollectAPI",
+            "type": "API",
+            "description": "External API to collect count data from external systems"
+        },
+        {
+            "name": "CountCollectedEvent",
+            "type": "Event",
+            "description": "Internal event emitted when a count is successfully collected"
+        }
+    ],
+    "components": [
+        {
+            "type": "MSA.Component",
+            "name": "CountCollector",
+            "description": "Receives count data via External API and emits internal events for processing.",
+            "providing-interfaces": ["CountCollectAPI", "CountCollectedEvent"],
+            "required-interfaces": [],
+            "properties": [
+                {
+                    "container": {
+                        "image": "count-api-service",
+                        "cpu": "500m",
+                        "memory": "512Mi"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "MSA.Component",
+            "name": "CountStorage",
+            "description": "Subscribes to CountCollectedEvent and persists data to file storage.",
+            "providing-interfaces": [],
+            "required-interfaces": ["CountCollectedEvent"],
+            "properties": [
+                {
+                    "container": {
+                        "image": "count-api-service",
+                        "cpu": "500m",
+                        "memory": "512Mi",
+                        "storage": "1Gi"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "MSA.Service",
+            "name": "count-api-service",
+            "description": "Microservice for count collection. Uses event-driven internal architecture for scalability.",
+            "providing-interfaces": ["CountCollectAPI"],
+            "required-interfaces": [],
+            "components": {
+                "collector": "CountCollector",
+                "storage": "CountStorage"
+            },
+            "connectors": [
+                {
+                    "from": "collector",
+                    "to": "storage",
+                    "interface": "CountCollectedEvent"
+                }
+            ]
+        },
+        {
+            "type": "MSA.System",
+            "name": "CountCollectionSystem",
+            "description": "System for collecting and managing external count metrics.",
+            "providing-interfaces": ["CountCollectAPI"],
+            "required-interfaces": [],
+            "components": {
+                "api": "count-api-service"
+            }
+        }
+    ]
+}

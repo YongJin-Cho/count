@@ -1,0 +1,84 @@
+{
+    "modules": [
+        {
+            "name": "common-layer",
+            "description": "Shared libraries and utilities used by multiple components",
+            "modules": [
+                {
+                    "name": "model-module",
+                    "description": "Common domain models and data transfer objects (DTOs)"
+                },
+                {
+                    "name": "auth-module",
+                    "description": "Authentication and authorization logic"
+                },
+                {
+                    "name": "event-module",
+                    "description": "Internal event definitions and bus interfaces"
+                }
+            ]
+        },
+        {
+            "name": "component-layer",
+            "description": "Internal business logic components",
+            "modules": [
+                {
+                    "name": "collector-module",
+                    "description": "Logic for receiving external count data and emitting internal events"
+                },
+                {
+                    "name": "storage-module",
+                    "description": "Logic for persisting count data to storage"
+                }
+            ]
+        },
+        {
+            "name": "service-layer",
+            "description": "Service entry points and orchestration",
+            "modules": [
+                {
+                    "name": "count-api-service-module",
+                    "description": "Aggregates collector and storage components into a single executable service",
+                    "properties": [
+                        {
+                            "output": {
+                                "type": "image",
+                                "name": "count-api-service"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "from": "service-layer/count-api-service-module",
+            "to": "component-layer/collector-module"
+        },
+        {
+            "from": "service-layer/count-api-service-module",
+            "to": "component-layer/storage-module"
+        },
+        {
+            "from": "component-layer/collector-module",
+            "to": "common-layer/model-module"
+        },
+        {
+            "from": "component-layer/collector-module",
+            "to": "common-layer/auth-module"
+        },
+        {
+            "from": "component-layer/collector-module",
+            "to": "common-layer/event-module"
+        },
+        {
+            "from": "component-layer/storage-module",
+            "to": "common-layer/model-module"
+        },
+        {
+            "from": "component-layer/storage-module",
+            "to": "common-layer/event-module"
+        }
+    ]
+}

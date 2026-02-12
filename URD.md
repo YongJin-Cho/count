@@ -1,0 +1,17 @@
+# User Requirement Document (URD)
+
+## 1. Business Purpose & Intent
+다양한 외부 소스로부터 발생하거나 관리되는 count 데이터를 중앙 시스템으로 수집하여, 통합된 데이터 관리 및 분석을 가능하게 하는 것을 목적으로 한다.
+
+## 2. User Requirements
+- **[UR-01]** 외부 시스템은 HTTP POST 방식을 통해 count 데이터를 전송할 수 있어야 한다. (Ref: Issue #71e94b3)
+- **[UR-02]** 전송되는 데이터는 외부 시스템의 식별 정보와 해당 시점의 count 상태 값을 포함해야 한다. (Ref: Issue #71e94b3)
+- **[UR-03]** 외부 API 요청은 신뢰할 수 있는 소스로부터의 접근임을 보장하기 위해 표준 Bearer Token 방식의 인증을 수행해야 한다. 이는 사내 보안 가이드를 준수하고 토큰 기반의 확장성 있는 인증 체계를 마련하기 위함이다. (Ref: Issue #71e94b3)
+- **[UR-04]** 시스템의 고성능 처리와 유지보수 효율성을 위해 Go 1.21 이상의 기술 스택을 사용한다. (Ref: Issue #71e94b3)
+- **[UR-05]** 클라우드 네이티브 환경에서의 유연한 확장과 효율적인 운영을 위해 Kubernetes 기반의 인프라 환경을 활용한다. (Ref: Issue #71e94b3)
+- **[UR-06]** 실시간 데이터 수집의 병목을 방지하기 위해 API 응답 지연 시간은 P95 기준 200ms 이내로 유지해야 한다. (Ref: Issue #71e94b3)
+- **[UR-07]** 서비스의 지속성을 위해 연간 99.9% 이상의 가용성을 목표로 한다. (Ref: Issue #71e94b3)
+
+## 3. Change History Summary (Decision Log)
+- **2026-02-12**: Requirement Validator의 피드백을 반영하여 기술 스택(Go, K8s), 인증 방식(Bearer Token) 구체화 및 품질 요구사항(성능, 가용성) 추가 정의. (Issue #71e94b3)
+- **2026-02-12**: 신규 생성 및 외부 count 수집 API 요구사항 ([UR-01], [UR-02], [UR-03]) 정의. (Issue #71e94b3)

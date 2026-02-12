@@ -1,0 +1,64 @@
+{
+  "asyncapi": "3.0.0",
+  "info": {
+    "title": "CountCollectedEvent",
+    "version": "1.0.0",
+    "description": "Internal event emitted when a count is successfully collected via the API"
+  },
+  "channels": {
+    "countCollected": {
+      "address": "internal.count.collected",
+      "messages": {
+        "countCollectedMessage": {
+          "$ref": "#/components/messages/CountCollected"
+        }
+      }
+    }
+  },
+  "operations": {
+    "onCountCollected": {
+      "action": "send",
+      "channel": {
+        "$ref": "#/channels/countCollected"
+      },
+      "summary": "Publish count collected event",
+      "messages": [
+        {
+          "$ref": "#/components/messages/CountCollected"
+        }
+      ]
+    }
+  },
+  "components": {
+    "messages": {
+      "CountCollected": {
+        "name": "CountCollected",
+        "title": "Count Collected Message",
+        "summary": "Contains details of the collected count",
+        "contentType": "application/json",
+        "payload": {
+          "type": "object",
+          "properties": {
+            "external_id": {
+              "type": "string",
+              "description": "The external identifier for the count"
+            },
+            "count": {
+              "type": "integer",
+              "description": "The number that was collected"
+            },
+            "timestamp": {
+              "type": "string",
+              "format": "date-time",
+              "description": "The time when the count was collected"
+            }
+          },
+          "required": [
+            "external_id",
+            "count"
+          ]
+        }
+      }
+    }
+  }
+}

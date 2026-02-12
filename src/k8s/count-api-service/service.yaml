@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: count-api-service
+  namespace: count-collection-system
+spec:
+  selector:
+    app: count-api-service
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: ClusterIP
