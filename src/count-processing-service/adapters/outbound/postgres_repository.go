@@ -71,3 +71,42 @@ func (r *postgresRepository) Delete(ctx context.Context, itemID string) error {
 	_, err := r.db.ExecContext(ctx, query, itemID)
 	return err
 }
+
+func (r *postgresRepository) Increase(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+	query := `UPDATE count_values SET current_value = current_value + $1, last_updated_at = NOW() WHERE item_id = $2 RETURNING item_id, current_value, last_updated_at`
+	var count domain.CountValue
+	err := r.db.GetContext(ctx, &count, query, amount, itemID)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &count, nil
+}
+
+func (r *postgresRepository) Decrease(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+	query := `UPDATE count_values SET current_value = current_value - $1, last_updated_at = NOW() WHERE item_id = $2 RETURNING item_id, current_value, last_updated_at`
+	var count domain.CountValue
+	err := r.db.GetContext(ctx, &count, query, amount, itemID)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &count, nil
+}
+
+func (r *postgresRepository) Reset(ctx context.Context, itemID string) (*domain.CountValue, error) {
+	query := `UPDATE count_values SET current_value = 0, last_updated_at = NOW() WHERE item_id = $1 RETURNING item_id, current_value, last_updated_at`
+	var count domain.CountValue
+	err := r.db.GetContext(ctx, &count, query, itemID)
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	return &count, nil
+}

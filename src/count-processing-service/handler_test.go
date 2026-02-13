@@ -119,11 +119,123 @@ func TestCountValueHandler_Delete(t *testing.T) {
 	})
 }
 
+func TestCountValueHandler_ExternalAPI(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	t.Run("increase success", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				assert.Equal(t, "item-1", itemID)
+				assert.Equal(t, 5, amount)
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 15}, nil
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		reqBody, _ := json.Marshal(map[string]int{"amount": 5})
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/counts/item-1/increase", bytes.NewBuffer(reqBody))
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		var actual map[string]interface{}
+		json.Unmarshal(resp.Body.Bytes(), &actual)
+		assert.Equal(t, "item-1", actual["itemId"])
+		assert.Equal(t, float64(15), actual["value"])
+	})
+
+	t.Run("increase default amount", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				assert.Equal(t, 1, amount)
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 11}, nil
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/counts/item-1/increase", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+	})
+
+	t.Run("decrease success", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			DecreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 5}, nil
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		reqBody, _ := json.Marshal(map[string]int{"amount": 5})
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/counts/item-1/decrease", bytes.NewBuffer(reqBody))
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		var actual map[string]interface{}
+		json.Unmarshal(resp.Body.Bytes(), &actual)
+		assert.Equal(t, float64(5), actual["value"])
+	})
+
+	t.Run("reset success", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			ResetFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 0}, nil
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/counts/item-1/reset", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		var actual map[string]interface{}
+		json.Unmarshal(resp.Body.Bytes(), &actual)
+		assert.Equal(t, float64(0), actual["value"])
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				return nil, domain.ErrNotFound
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		req, _ := http.NewRequest(http.MethodPost, "/api/v1/counts/item-1/increase", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusNotFound, resp.Code)
+	})
+}
+
 type MockCountValueUseCase struct {
 	InitializeFunc  func(ctx context.Context, itemID string, initialValue int) (*domain.CountValue, error)
 	GetFunc         func(ctx context.Context, itemID string) (*domain.CountValue, error)
 	GetMultipleFunc func(ctx context.Context, itemIDs []string) ([]domain.CountValue, error)
 	DeleteFunc      func(ctx context.Context, itemID string) error
+	IncreaseFunc    func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error)
+	DecreaseFunc    func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error)
+	ResetFunc       func(ctx context.Context, itemID string) (*domain.CountValue, error)
 }
 
 func (m *MockCountValueUseCase) Initialize(ctx context.Context, itemID string, initialValue int) (*domain.CountValue, error) {
@@ -140,4 +252,16 @@ func (m *MockCountValueUseCase) GetMultiple(ctx context.Context, itemIDs []strin
 
 func (m *MockCountValueUseCase) Delete(ctx context.Context, itemID string) error {
 	return m.DeleteFunc(ctx, itemID)
+}
+
+func (m *MockCountValueUseCase) Increase(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+	return m.IncreaseFunc(ctx, itemID, amount)
+}
+
+func (m *MockCountValueUseCase) Decrease(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+	return m.DecreaseFunc(ctx, itemID, amount)
+}
+
+func (m *MockCountValueUseCase) Reset(ctx context.Context, itemID string) (*domain.CountValue, error) {
+	return m.ResetFunc(ctx, itemID)
 }

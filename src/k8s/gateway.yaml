@@ -47,3 +47,23 @@ spec:
       backendRefs:
         - name: count-management-service
           port: 8080
+
+---
+# HTTPRoute for Count Processing (External Update API)
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: HTTPRoute
+metadata:
+  name: count-processing-route
+  namespace: count-system
+spec:
+  parentRefs:
+    - name: count-gateway
+      namespace: count-system
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /api/v1/counts
+      backendRefs:
+        - name: count-processing-service
+          port: 8080

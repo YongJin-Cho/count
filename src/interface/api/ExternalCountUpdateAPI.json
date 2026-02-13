@@ -1,0 +1,229 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "External Count Update API",
+    "description": "High-performance, atomic API for external systems to modify count values. This API ensures that counting events from various external systems are accurately recorded with 100% consistency.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Base path for External Count Update API"
+    }
+  ],
+  "paths": {
+    "/counts/{itemId}/increase": {
+      "post": {
+        "summary": "Increase count value",
+        "description": "Atomically increases the count value of a specific item. Defaults to 1 if amount is not specified. Aligns with FR-002-01.",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique identifier of the count item"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "The amount to increase by"
+                  }
+                }
+              },
+              "example": {
+                "amount": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful increase (FR-002-01-01)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountUpdateResponse"
+                },
+                "example": {
+                  "itemId": "count-123",
+                  "value": 11
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Count item not found (FR-002-01-03)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Count item with ID 'invalid-id' not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/counts/{itemId}/decrease": {
+      "post": {
+        "summary": "Decrease count value",
+        "description": "Atomically decreases the count value of a specific item. Defaults to 1 if amount is not specified. Aligns with FR-002-02.",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique identifier of the count item"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "amount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "default": 1,
+                    "description": "The amount to decrease by"
+                  }
+                }
+              },
+              "example": {
+                "amount": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful decrease (FR-002-02-01)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountUpdateResponse"
+                },
+                "example": {
+                  "itemId": "count-123",
+                  "value": 9
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Count item not found (FR-002-02-03)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Count item with ID 'invalid-id' not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/counts/{itemId}/reset": {
+      "post": {
+        "summary": "Reset count value",
+        "description": "Atomically resets the count value of a specific item to 0. Aligns with FR-002-03.",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique identifier of the count item"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful reset (FR-002-03-01)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountUpdateResponse"
+                },
+                "example": {
+                  "itemId": "count-123",
+                  "value": 0
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Count item not found (FR-002-03-02)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Count item with ID 'invalid-id' not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CountUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "The identifier of the count item"
+          },
+          "value": {
+            "type": "integer",
+            "description": "The updated count value"
+          }
+        },
+        "required": [
+          "itemId",
+          "value"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        },
+        "required": [
+          "error"
+        ]
+      }
+    }
+  }
+}

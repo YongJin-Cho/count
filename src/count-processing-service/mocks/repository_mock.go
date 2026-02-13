@@ -11,6 +11,9 @@ type MockCountValueRepository struct {
 	GetByIDFunc  func(ctx context.Context, itemID string) (*domain.CountValue, error)
 	GetByIDsFunc func(ctx context.Context, itemIDs []string) ([]domain.CountValue, error)
 	DeleteFunc   func(ctx context.Context, itemID string) error
+	IncreaseFunc func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error)
+	DecreaseFunc func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error)
+	ResetFunc    func(ctx context.Context, itemID string) (*domain.CountValue, error)
 }
 
 func (m *MockCountValueRepository) Init(ctx context.Context) error {
@@ -34,4 +37,16 @@ func (m *MockCountValueRepository) GetByIDs(ctx context.Context, itemIDs []strin
 
 func (m *MockCountValueRepository) Delete(ctx context.Context, itemID string) error {
 	return m.DeleteFunc(ctx, itemID)
+}
+
+func (m *MockCountValueRepository) Increase(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+	return m.IncreaseFunc(ctx, itemID, amount)
+}
+
+func (m *MockCountValueRepository) Decrease(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+	return m.DecreaseFunc(ctx, itemID, amount)
+}
+
+func (m *MockCountValueRepository) Reset(ctx context.Context, itemID string) (*domain.CountValue, error) {
+	return m.ResetFunc(ctx, itemID)
 }

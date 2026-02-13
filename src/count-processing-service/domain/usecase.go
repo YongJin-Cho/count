@@ -9,6 +9,9 @@ type CountValueUseCase interface {
 	Get(ctx context.Context, itemID string) (*CountValue, error)
 	GetMultiple(ctx context.Context, itemIDs []string) ([]CountValue, error)
 	Delete(ctx context.Context, itemID string) error
+	Increase(ctx context.Context, itemID string, amount int) (*CountValue, error)
+	Decrease(ctx context.Context, itemID string, amount int) (*CountValue, error)
+	Reset(ctx context.Context, itemID string) (*CountValue, error)
 }
 
 type countValueUseCase struct {
@@ -65,4 +68,37 @@ func (u *countValueUseCase) Delete(ctx context.Context, itemID string) error {
 		return ErrNotFound
 	}
 	return u.repo.Delete(ctx, itemID)
+}
+
+func (u *countValueUseCase) Increase(ctx context.Context, itemID string, amount int) (*CountValue, error) {
+	val, err := u.repo.Increase(ctx, itemID, amount)
+	if err != nil {
+		return nil, err
+	}
+	if val == nil {
+		return nil, ErrNotFound
+	}
+	return val, nil
+}
+
+func (u *countValueUseCase) Decrease(ctx context.Context, itemID string, amount int) (*CountValue, error) {
+	val, err := u.repo.Decrease(ctx, itemID, amount)
+	if err != nil {
+		return nil, err
+	}
+	if val == nil {
+		return nil, ErrNotFound
+	}
+	return val, nil
+}
+
+func (u *countValueUseCase) Reset(ctx context.Context, itemID string) (*CountValue, error) {
+	val, err := u.repo.Reset(ctx, itemID)
+	if err != nil {
+		return nil, err
+	}
+	if val == nil {
+		return nil, ErrNotFound
+	}
+	return val, nil
 }

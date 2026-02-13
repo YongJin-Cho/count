@@ -7,6 +7,9 @@ The "Count" system aims to provide a robust and scalable platform for managing c
 - **FR-001: Count Item Management**
   - Summary: Allows users to register, list, update, and delete count items (names must be unique).
   - Detailed Spec: [spec/FR-001-count-item-management.md](FR-001-count-item-management.md)
+- **FR-002: External Count Update API**
+  - Summary: Provides an API for external sources to increase, decrease, or reset count values atomically and at high frequency.
+  - Detailed Spec: [spec/FR-002-external-count-update-api.md](FR-002-external-count-update-api.md)
 
 ## Quality Requirement List
 - **QR-001: Performance and Reliability**

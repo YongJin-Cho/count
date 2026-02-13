@@ -4,6 +4,7 @@ import (
 	"context"
 	"count-processing-service/domain"
 	"count-processing-service/mocks"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -116,5 +117,93 @@ func TestCountValueUseCase_Delete(t *testing.T) {
 
 		err := uc.Delete(ctx, "item-1")
 		assert.ErrorIs(t, err, domain.ErrNotFound)
+	})
+}
+
+func TestCountValueUseCase_Updates(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("increase success", func(t *testing.T) {
+		mockRepo := &mocks.MockCountValueRepository{
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 11}, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo)
+
+		res, err := uc.Increase(ctx, "item-1", 1)
+		assert.NoError(t, err)
+		assert.Equal(t, 11, res.CurrentValue)
+	})
+
+	t.Run("increase not found", func(t *testing.T) {
+		mockRepo := &mocks.MockCountValueRepository{
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				return nil, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo)
+
+		res, err := uc.Increase(ctx, "item-1", 1)
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+		assert.Nil(t, res)
+	})
+
+	t.Run("decrease success", func(t *testing.T) {
+		mockRepo := &mocks.MockCountValueRepository{
+			DecreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 9}, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo)
+
+		res, err := uc.Decrease(ctx, "item-1", 1)
+		assert.NoError(t, err)
+		assert.Equal(t, 9, res.CurrentValue)
+	})
+
+	t.Run("reset success", func(t *testing.T) {
+		mockRepo := &mocks.MockCountValueRepository{
+			ResetFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: itemID, CurrentValue: 0}, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo)
+
+		res, err := uc.Reset(ctx, "item-1")
+		assert.NoError(t, err)
+		assert.Equal(t, 0, res.CurrentValue)
+	})
+}
+
+func TestCountValueUseCase_Concurrency(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("100 concurrent increase requests", func(t *testing.T) {
+		currentVal := 0
+		var mu sync.Mutex
+		mockRepo := &mocks.MockCountValueRepository{
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+				mu.Lock()
+				defer mu.Unlock()
+				currentVal += amount
+				return &domain.CountValue{ItemID: itemID, CurrentValue: currentVal}, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo)
+
+		var wg sync.WaitGroup
+		numRequests := 100
+		for i := 0; i < numRequests; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				_, err := uc.Increase(ctx, "item-1", 1)
+				assert.NoError(t, err)
+			}()
+		}
+		wg.Wait()
+
+		assert.Equal(t, 100, currentVal)
 	})
 }

@@ -6,6 +6,11 @@
             "description": "External API for managing count item metadata (register, list, update, delete)."
         },
         {
+            "name": "ExternalCountUpdateAPI",
+            "type": "API",
+            "description": "External API for high-frequency count value operations (increase, decrease, reset)."
+        },
+        {
             "name": "CountItemManagementUI",
             "type": "API",
             "description": "UI API (HTMX) for count item management screens."
@@ -54,7 +59,7 @@
             "type": "MSA.Component",
             "name": "ProcessingBackend",
             "description": "Handles high-frequency count value updates and retrievals.",
-            "providing-interfaces": ["InternalCountValueAPI"],
+            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI"],
             "required-interfaces": ["PostgreSQL"],
             "properties": [
                 {
@@ -100,7 +105,7 @@
             "type": "MSA.Service",
             "name": "count-processing-service",
             "description": "Service for processing count value operations.",
-            "providing-interfaces": ["InternalCountValueAPI"],
+            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI"],
             "required-interfaces": [],
             "components": {
                 "backend": "ProcessingBackend",
@@ -118,7 +123,7 @@
             "type": "MSA.System",
             "name": "CountManagementSystem",
             "description": "Root system for Count Management and Processing.",
-            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI"],
+            "providing-interfaces": ["CountItemAPI", "ExternalCountUpdateAPI", "CountItemManagementUI"],
             "required-interfaces": [],
             "components": {
                 "management": "count-management-service",
