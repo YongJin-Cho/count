@@ -117,10 +117,10 @@ func TestListItemsUI(t *testing.T) {
 	r.GET("/ui/count-items", handler.ListItemsUI)
 
 	t.Run("success", func(t *testing.T) {
-		mockSvc.ListItemFunc = func(ctx context.Context) ([]domain.CountItem, error) {
-			return []domain.CountItem{
-				{ID: "1", Name: "Item 1", Description: "Desc 1"},
-				{ID: "2", Name: "Item 2", Description: "Desc 2"},
+		mockSvc.ListItemWithValuesFunc = func(ctx context.Context) ([]domain.CountItemWithValue, error) {
+			return []domain.CountItemWithValue{
+				{CountItem: domain.CountItem{ID: "1", Name: "Item 1", Description: "Desc 1"}, Value: 10},
+				{CountItem: domain.CountItem{ID: "2", Name: "Item 2", Description: "Desc 2"}, Value: 20},
 			}, nil
 		}
 
@@ -134,11 +134,14 @@ func TestListItemsUI(t *testing.T) {
 		if !strings.Contains(w.Body.String(), "Item 1") || !strings.Contains(w.Body.String(), "Item 2") {
 			t.Error("response should contain item names")
 		}
+		if !strings.Contains(w.Body.String(), "10") || !strings.Contains(w.Body.String(), "20") {
+			t.Error("response should contain values")
+		}
 	})
 
 	t.Run("empty list", func(t *testing.T) {
-		mockSvc.ListItemFunc = func(ctx context.Context) ([]domain.CountItem, error) {
-			return []domain.CountItem{}, nil
+		mockSvc.ListItemWithValuesFunc = func(ctx context.Context) ([]domain.CountItemWithValue, error) {
+			return []domain.CountItemWithValue{}, nil
 		}
 
 		w := httptest.NewRecorder()
@@ -150,6 +153,49 @@ func TestListItemsUI(t *testing.T) {
 		}
 		if !strings.Contains(w.Body.String(), "No items found.") {
 			t.Error("response should contain empty state message")
+		}
+	})
+}
+
+func TestGetItemValueUI(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mockSvc := &MockService{}
+	handler := inbound.NewHTTPHandler(mockSvc)
+
+	r := gin.New()
+	r.GET("/ui/counts/:id/value", handler.GetItemValueUI)
+
+	t.Run("success", func(t *testing.T) {
+		mockSvc.GetItemValueFunc = func(ctx context.Context, id string) (int, error) {
+			return 42, nil
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/ui/counts/123/value", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected 200, got %d", w.Code)
+		}
+		if w.Body.String() != "42" {
+			t.Errorf("expected 42, got %s", w.Body.String())
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		mockSvc.GetItemValueFunc = func(ctx context.Context, id string) (int, error) {
+			return 0, domain.ErrItemNotFound
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/ui/counts/non-existent/value", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404, got %d", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "Item not found") {
+			t.Error("response should contain error message")
 		}
 	})
 }

@@ -31,3 +31,10 @@ spec:
             name: count-management-service
             port:
               number: 8080
+      - path: /ui/counts
+        pathType: Prefix
+        backend:
+          service:
+            name: count-management-service
+            port:
+              number: 8080

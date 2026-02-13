@@ -44,6 +44,9 @@ spec:
         - path:
             type: PathPrefix
             value: /ui
+        - path:
+            type: PathPrefix
+            value: /ui/counts
       backendRefs:
         - name: count-management-service
           port: 8080

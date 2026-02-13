@@ -191,6 +191,38 @@ else
   exit 1
 fi
 
+# 8. Test API Retrieval
+echo "Testing API Retrieval..."
+RETRIEVAL_RESPONSE=$(curl -s "$PROC_URL/api/v1/counts/$ITEM_ID/value")
+echo "Retrieval response: $RETRIEVAL_RESPONSE"
+if [[ "$RETRIEVAL_RESPONSE" == *"\"currentValue\":11"* ]]; then
+  echo "SUCCESS: Retrieved correct value via API."
+else
+  echo "FAILURE: Incorrect value retrieved via API."
+  exit 1
+fi
+
+# 9. Test Bulk API Retrieval
+echo "Testing Bulk API Retrieval..."
+BULK_RETRIEVAL_RESPONSE=$(curl -s "$PROC_URL/api/v1/counts/values")
+if [[ "$BULK_RETRIEVAL_RESPONSE" == *"$ITEM_ID"* ]] && [[ "$BULK_RETRIEVAL_RESPONSE" == *"11"* ]]; then
+  echo "SUCCESS: Item found in bulk retrieval."
+else
+  echo "FAILURE: Item or correct value not found in bulk retrieval."
+  exit 1
+fi
+
+# 10. Test UI Retrieval (HTMX)
+echo "Testing UI Retrieval (HTMX)..."
+UI_RETRIEVAL_RESPONSE=$(curl -s "$MGMT_URL/ui/counts/$ITEM_ID/value")
+echo "UI Retrieval response: $UI_RETRIEVAL_RESPONSE"
+if [[ "$UI_RETRIEVAL_RESPONSE" == *"11"* ]]; then
+  echo "SUCCESS: Retrieved correct value via UI fragment."
+else
+  echo "FAILURE: Incorrect value retrieved via UI fragment."
+  exit 1
+fi
+
 # Clean up
 curl -s -X DELETE "$MGMT_URL/api/v1/count-items/$ITEM_ID" > /dev/null
 

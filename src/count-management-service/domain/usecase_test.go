@@ -114,6 +114,58 @@ func TestListItem(t *testing.T) {
 	})
 }
 
+func TestListItemWithValues(t *testing.T) {
+	mockRepo := &mocks.MockCountItemRepository{}
+	mockClient := &mocks.MockValueServiceClient{}
+	uc := domain.NewCountItemUseCase(mockRepo, mockClient)
+
+	t.Run("success", func(t *testing.T) {
+		mockRepo.FindAllFunc = func(ctx context.Context) ([]domain.CountItem, error) {
+			return []domain.CountItem{
+				{ID: "1", Name: "Item 1"},
+				{ID: "2", Name: "Item 2"},
+			}, nil
+		}
+		mockClient.GetValuesFunc = func(ctx context.Context, itemIds []string) (map[string]int, error) {
+			return map[string]int{
+				"1": 10,
+				"2": 20,
+			}, nil
+		}
+
+		items, err := uc.ListItemWithValues(context.Background())
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if len(items) != 2 {
+			t.Errorf("expected 2 items, got %d", len(items))
+		}
+		if items[0].Value != 10 || items[1].Value != 20 {
+			t.Errorf("incorrect values: %+v", items)
+		}
+	})
+}
+
+func TestGetItemValue(t *testing.T) {
+	mockRepo := &mocks.MockCountItemRepository{}
+	mockClient := &mocks.MockValueServiceClient{}
+	uc := domain.NewCountItemUseCase(mockRepo, mockClient)
+
+	t.Run("success", func(t *testing.T) {
+		mockClient.GetValueFunc = func(ctx context.Context, id string) (int, error) {
+			return 42, nil
+		}
+
+		val, err := uc.GetItemValue(context.Background(), "123")
+		if err != nil {
+			t.Fatalf("expected no error, got %v", err)
+		}
+		if val != 42 {
+			t.Errorf("expected 42, got %d", val)
+		}
+	})
+}
+
 func TestUpdateItem(t *testing.T) {
 	mockRepo := &mocks.MockCountItemRepository{}
 	mockClient := &mocks.MockValueServiceClient{}

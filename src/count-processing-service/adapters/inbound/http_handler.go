@@ -27,13 +27,10 @@ func (h *CountValueHandler) RegisterRoutes(r *gin.Engine) {
 	external := r.Group("/api/v1/counts")
 	{
 		external.GET("/values", h.GetAllExternal)
-		item := external.Group("/:itemId")
-		{
-			item.GET("/value", h.GetSingleExternal)
-			item.POST("/increase", h.Increase)
-			item.POST("/decrease", h.Decrease)
-			item.POST("/reset", h.Reset)
-		}
+		external.GET("/:itemId/value", h.GetSingleExternal)
+		external.POST("/:itemId/increase", h.Increase)
+		external.POST("/:itemId/decrease", h.Decrease)
+		external.POST("/:itemId/reset", h.Reset)
 	}
 }
 
