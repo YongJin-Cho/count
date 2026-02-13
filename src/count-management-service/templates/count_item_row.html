@@ -2,6 +2,14 @@
     <td>{{.Name}}</td>
     <td>{{.Description}}</td>
     <td>
+        <span id="item-value-{{.ID}}" 
+              hx-get="/ui/counts/{{.ID}}/value" 
+              hx-trigger="every 30s" 
+              hx-swap="innerHTML">
+            {{if .Value}}{{.Value}}{{else}}0{{end}}
+        </span>
+    </td>
+    <td>
         <button class="btn btn-danger" 
                 hx-delete="/ui/count-items/{{.ID}}" 
                 hx-target="#count-item-{{.ID}}" 

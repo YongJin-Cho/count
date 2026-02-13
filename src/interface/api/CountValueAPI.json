@@ -1,0 +1,120 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CountValueAPI",
+    "version": "1.0.0",
+    "description": "API for retrieving count values."
+  },
+  "paths": {
+    "/api/v1/counts/{id}/value": {
+      "get": {
+        "summary": "Get the current value of a specific count",
+        "operationId": "getCountValueById",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the count item",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current count value for the specified ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountValue"
+                },
+                "example": {
+                  "itemId": "item-123",
+                  "currentValue": 42
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Count item not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "message": "Count item item-123 not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/counts/values": {
+      "get": {
+        "summary": "Get current values for all count items",
+        "operationId": "getAllCountValues",
+        "responses": {
+          "200": {
+            "description": "List of current count values",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CountValue"
+                  }
+                },
+                "example": [
+                  {
+                    "itemId": "item-123",
+                    "currentValue": 42
+                  },
+                  {
+                    "itemId": "item-456",
+                    "currentValue": 10
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CountValue": {
+        "type": "object",
+        "required": [
+          "itemId",
+          "currentValue"
+        ],
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "The ID of the item being counted"
+          },
+          "currentValue": {
+            "type": "integer",
+            "description": "The current count value"
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Error message description"
+          }
+        }
+      }
+    }
+  }
+}

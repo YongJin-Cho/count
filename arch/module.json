@@ -2,7 +2,7 @@
     "modules": [
         {
             "name": "count-management-service",
-            "description": "Service for managing count item metadata and providing the management UI.",
+            "description": "Service for managing count item metadata and providing management and monitoring UIs.",
             "properties": [
                 {
                     "output": {
@@ -14,7 +14,7 @@
         },
         {
             "name": "count-processing-service",
-            "description": "Service for processing count value operations.",
+            "description": "Service for processing high-frequency count value updates and retrievals.",
             "properties": [
                 {
                     "output": {

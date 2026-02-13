@@ -49,6 +49,43 @@ func (u *countItemUseCase) ListItem(ctx context.Context) ([]CountItem, error) {
 	return u.repo.FindAll(ctx)
 }
 
+func (u *countItemUseCase) ListItemWithValues(ctx context.Context) ([]CountItemWithValue, error) {
+	items, err := u.repo.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(items) == 0 {
+		return []CountItemWithValue{}, nil
+	}
+
+	itemIds := make([]string, len(items))
+	for i, item := range items {
+		itemIds[i] = item.ID
+	}
+
+	values, err := u.valueClient.GetValues(ctx, itemIds)
+	if err != nil {
+		// Even if we fail to get values, we might want to return items with 0 or error.
+		// For now, let's return error as per usual.
+		return nil, err
+	}
+
+	result := make([]CountItemWithValue, len(items))
+	for i, item := range items {
+		result[i] = CountItemWithValue{
+			CountItem: item,
+			Value:     values[item.ID],
+		}
+	}
+
+	return result, nil
+}
+
+func (u *countItemUseCase) GetItemValue(ctx context.Context, id string) (int, error) {
+	return u.valueClient.GetValue(ctx, id)
+}
+
 func (u *countItemUseCase) DeleteItem(ctx context.Context, id string) error {
 	item, err := u.repo.FindByID(ctx, id)
 	if err != nil {

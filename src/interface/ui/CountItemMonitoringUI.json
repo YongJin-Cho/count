@@ -1,0 +1,65 @@
+{
+  "ui_id": "CountItemMonitoringUI",
+  "layout": "stack",
+  "components": [
+    {
+      "id": "monitoring-header",
+      "type": "Header",
+      "content": "Monitoring: {name}",
+      "style": "text-2xl font-bold mb-4"
+    },
+    {
+      "id": "monitoring-card",
+      "type": "Card",
+      "class": "p-6 border rounded shadow-lg text-center",
+      "components": [
+        {
+          "id": "count-label",
+          "type": "Text",
+          "content": "Current Value",
+          "style": "text-gray-500 uppercase tracking-wide"
+        },
+        {
+          "id": "value-display",
+          "type": "Container",
+          "class": "mt-2",
+          "htmx_spec": {
+            "hx_get": "/ui/counts/{id}/value",
+            "hx_trigger": "load, every 5s",
+            "hx_target": "#value-display",
+            "hx_swap": "innerHTML",
+            "hx_indicator": "#loading-indicator"
+          },
+          "components": [
+            {
+              "id": "current-value",
+              "type": "Text",
+              "content": "{value}",
+              "style": "text-6xl font-extrabold text-blue-600"
+            }
+          ]
+        },
+        {
+          "id": "loading-indicator",
+          "type": "Indicator",
+          "class": "htmx-indicator mt-2",
+          "content": "Updating..."
+        }
+      ]
+    },
+    {
+      "id": "actions",
+      "type": "Container",
+      "class": "mt-6 flex gap-4",
+      "components": [
+        {
+          "id": "btn-back",
+          "type": "Button",
+          "label": "Back to List",
+          "url": "/ui/counts",
+          "style": "bg-gray-200 px-4 py-2 rounded"
+        }
+      ]
+    }
+  ]
+}

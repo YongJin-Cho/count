@@ -39,6 +39,8 @@ func (m *MockCountItemRepository) FindByName(ctx context.Context, name string) (
 type MockValueServiceClient struct {
 	InitializeValueFunc func(ctx context.Context, itemId string, initialValue int) error
 	DeleteValueFunc     func(ctx context.Context, itemId string) error
+	GetValueFunc        func(ctx context.Context, itemId string) (int, error)
+	GetValuesFunc       func(ctx context.Context, itemIds []string) (map[string]int, error)
 }
 
 func (m *MockValueServiceClient) InitializeValue(ctx context.Context, itemId string, initialValue int) error {
@@ -46,4 +48,10 @@ func (m *MockValueServiceClient) InitializeValue(ctx context.Context, itemId str
 }
 func (m *MockValueServiceClient) DeleteValue(ctx context.Context, itemId string) error {
 	return m.DeleteValueFunc(ctx, itemId)
+}
+func (m *MockValueServiceClient) GetValue(ctx context.Context, itemId string) (int, error) {
+	return m.GetValueFunc(ctx, itemId)
+}
+func (m *MockValueServiceClient) GetValues(ctx context.Context, itemIds []string) (map[string]int, error) {
+	return m.GetValuesFunc(ctx, itemIds)
 }

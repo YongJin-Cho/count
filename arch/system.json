@@ -12,8 +12,18 @@
         },
         {
             "name": "CountItemManagementUI",
+            "type": "UI",
+            "description": "UI interface (HTMX) for count item management screens."
+        },
+        {
+            "name": "CountItemMonitoringUI",
+            "type": "UI",
+            "description": "UI interface (HTMX) for real-time monitoring of a specific count item's value."
+        },
+        {
+            "name": "CountValueAPI",
             "type": "API",
-            "description": "UI API (HTMX) for count item management screens."
+            "description": "API for retrieving current count values (specific item or all items)."
         },
         {
             "name": "InternalCountValueAPI",
@@ -31,7 +41,7 @@
             "type": "MSA.Component",
             "name": "ManagementBackend",
             "description": "Handles count item metadata and UI logic (HTMX).",
-            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI"],
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI", "CountItemMonitoringUI"],
             "required-interfaces": ["PostgreSQL", "InternalCountValueAPI"],
             "properties": [
                 {
@@ -59,12 +69,15 @@
             "type": "MSA.Component",
             "name": "ProcessingBackend",
             "description": "Handles high-frequency count value updates and retrievals.",
-            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI"],
+            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI", "CountValueAPI"],
             "required-interfaces": ["PostgreSQL"],
             "properties": [
                 {
                     "container": {
-                        "image": "count-processing-service"
+                        "image": "count-processing-service",
+                        "cpu": "2",
+                        "memory": "4Gi",
+                        "replicas": 4
                     }
                 }
             ]
@@ -78,7 +91,9 @@
             "properties": [
                 {
                     "container": {
-                        "image": "postgres:15-alpine"
+                        "image": "postgres:15-alpine",
+                        "cpu": "2",
+                        "memory": "8Gi"
                     }
                 }
             ]
@@ -87,7 +102,7 @@
             "type": "MSA.Service",
             "name": "count-management-service",
             "description": "Service for managing count item metadata and providing the management UI.",
-            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI"],
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI", "CountItemMonitoringUI"],
             "required-interfaces": ["InternalCountValueAPI"],
             "components": {
                 "backend": "ManagementBackend",
@@ -105,7 +120,7 @@
             "type": "MSA.Service",
             "name": "count-processing-service",
             "description": "Service for processing count value operations.",
-            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI"],
+            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI", "CountValueAPI"],
             "required-interfaces": [],
             "components": {
                 "backend": "ProcessingBackend",
@@ -123,7 +138,7 @@
             "type": "MSA.System",
             "name": "CountManagementSystem",
             "description": "Root system for Count Management and Processing.",
-            "providing-interfaces": ["CountItemAPI", "ExternalCountUpdateAPI", "CountItemManagementUI"],
+            "providing-interfaces": ["CountItemAPI", "ExternalCountUpdateAPI", "CountItemManagementUI", "CountValueAPI", "CountItemMonitoringUI"],
             "required-interfaces": [],
             "components": {
                 "management": "count-management-service",

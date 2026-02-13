@@ -8,6 +8,7 @@ type CountValueUseCase interface {
 	Initialize(ctx context.Context, itemID string, initialValue int) (*CountValue, error)
 	Get(ctx context.Context, itemID string) (*CountValue, error)
 	GetMultiple(ctx context.Context, itemIDs []string) ([]CountValue, error)
+	GetAll(ctx context.Context) ([]CountValue, error)
 	Delete(ctx context.Context, itemID string) error
 	Increase(ctx context.Context, itemID string, amount int) (*CountValue, error)
 	Decrease(ctx context.Context, itemID string, amount int) (*CountValue, error)
@@ -57,6 +58,10 @@ func (u *countValueUseCase) GetMultiple(ctx context.Context, itemIDs []string) (
 		return []CountValue{}, nil
 	}
 	return u.repo.GetByIDs(ctx, itemIDs)
+}
+
+func (u *countValueUseCase) GetAll(ctx context.Context) ([]CountValue, error) {
+	return u.repo.GetAll(ctx)
 }
 
 func (u *countValueUseCase) Delete(ctx context.Context, itemID string) error {

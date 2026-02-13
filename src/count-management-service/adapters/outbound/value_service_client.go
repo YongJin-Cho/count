@@ -67,3 +67,77 @@ func (c *valueServiceClient) DeleteValue(ctx context.Context, itemId string) err
 
 	return nil
 }
+
+func (c *valueServiceClient) GetValue(ctx context.Context, itemId string) (int, error) {
+	url := fmt.Sprintf("%s/api/v1/internal/counts/%s", c.baseURL, itemId)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		return 0, domain.ErrItemNotFound
+	}
+	if resp.StatusCode >= 400 {
+		return 0, fmt.Errorf("failed to get value: status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		CurrentValue int `json:"currentValue"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return 0, err
+	}
+
+	return result.CurrentValue, nil
+}
+
+func (c *valueServiceClient) GetValues(ctx context.Context, itemIds []string) (map[string]int, error) {
+	if len(itemIds) == 0 {
+		return make(map[string]int), nil
+	}
+
+	url := fmt.Sprintf("%s/api/v1/internal/counts", c.baseURL)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	q := req.URL.Query()
+	for _, id := range itemIds {
+		q.Add("itemIds", id)
+	}
+	req.URL.RawQuery = q.Encode()
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("failed to get values: status %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Counts []struct {
+			ItemID       string `json:"itemId"`
+			CurrentValue int    `json:"currentValue"`
+		} `json:"counts"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	values := make(map[string]int)
+	for _, count := range result.Counts {
+		values[count.ItemID] = count.CurrentValue
+	}
+	return values, nil
+}

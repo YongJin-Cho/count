@@ -36,6 +36,15 @@
   - **Response**: `200 OK` with `{ "itemId": string, "value": 0 }`.
   - **Error**: `404 Not Found` if `itemId` does not exist.
 
+### External API - `CountValueAPI`
+- **GET /api/v1/counts/{id}/value**: Get the current value of a specific count.
+  - **Logic**: Fetch `current_value` from `count_values` table by `item_id`.
+  - **Response**: `200 OK` with `{ "itemId": string, "currentValue": integer }`.
+  - **Error**: `404 Not Found` if `id` does not exist.
+- **GET /api/v1/counts/values**: Get current values for all count items.
+  - **Logic**: Fetch all records from `count_values` table.
+  - **Response**: `200 OK` with array of `{ "itemId": string, "currentValue": integer }`.
+
 ### Internal API - `InternalCountValueAPI`
 - **POST /api/v1/internal/counts**: Initialize count value.
   - **Request Body**: `{ "itemId": string, "initialValue": integer }`
@@ -62,6 +71,9 @@
     - `item_id`: UUID or String, Primary Key
     - `current_value`: Integer, Default 0
     - `last_updated_at`: Timestamp, auto-updated on change.
+- **Retrieval Logic**:
+  - Implement fetching current values from `ProcessingPostgreSQL` for both internal and external retrieval APIs.
+  - Support bulk retrieval for the internal API to minimize network overhead when listing items.
 
 ## 5. Dependencies
 - **Reference Modules**: None
@@ -76,4 +88,6 @@
 - [ ] `POST /api/v1/counts/{itemId}/decrease` returns 200 and correctly decremented value.
 - [ ] `POST /api/v1/counts/{itemId}/reset` returns 200 and value becomes 0.
 - [ ] `GET /api/v1/internal/counts?itemIds=A&itemIds=B` returns current values for both.
+- [ ] `GET /api/v1/counts/{id}/value` returns 200 and correct JSON with `itemId` and `currentValue`.
+- [ ] `GET /api/v1/counts/values` returns 200 and JSON array of all count values.
 - [ ] `DELETE /api/v1/internal/counts/{itemId}` removes the record from DB.

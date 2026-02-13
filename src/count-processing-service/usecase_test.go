@@ -88,6 +88,27 @@ func TestCountValueUseCase_GetMultiple(t *testing.T) {
 	})
 }
 
+func TestCountValueUseCase_GetAll(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("success", func(t *testing.T) {
+		expected := []domain.CountValue{
+			{ItemID: "item-1", CurrentValue: 10},
+			{ItemID: "item-2", CurrentValue: 20},
+		}
+		mockRepo := &mocks.MockCountValueRepository{
+			GetAllFunc: func(ctx context.Context) ([]domain.CountValue, error) {
+				return expected, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo)
+
+		res, err := uc.GetAll(ctx)
+		assert.NoError(t, err)
+		assert.Equal(t, expected, res)
+	})
+}
+
 func TestCountValueUseCase_Delete(t *testing.T) {
 	ctx := context.Background()
 

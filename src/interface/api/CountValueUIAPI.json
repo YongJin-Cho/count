@@ -1,0 +1,96 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CountValueUIAPI",
+    "description": "UI APIs for retrieving count values, designed for HTMX-based frontends. This spec covers endpoints for specific value updates and item listing.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/ui/counts/{id}/value": {
+      "get": {
+        "operationId": "GetCountValueFragment",
+        "summary": "Retrieve specific count value HTML fragment",
+        "description": "Fetches the current value of a specific count item and returns it as an HTML fragment. This endpoint supports multiple UI contexts with different HTMX triggers and targets.\n\n### HTMX Specs (from ui-api.md):\n- **GetCountItemValueAPI** (CountItemManagementUI):\n  - Trigger: `every 30s`, `click` (on `item-value-{id}`)\n  - Target: `this` (the element that triggered the request)\n  - Swap: `innerHTML`\n- **GetCountValueAPI** (CountItemMonitoringUI):\n  - Trigger: `load, every 5s`\n  - Target: `#value-display`\n  - Swap: `innerHTML`",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the count item to retrieve the value for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of the count value fragment.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment containing the current count value."
+                },
+                "examples": {
+                  "simpleValue": {
+                    "summary": "Simple value fragment",
+                    "value": "42"
+                  },
+                  "managementUIFragment": {
+                    "summary": "Fragment for Management UI (replaces item-value-{id} content)",
+                    "value": "<span id=\"item-value-count-123\">42</span>"
+                  },
+                  "monitoringUIFragment": {
+                    "summary": "Fragment for Monitoring UI (replaces #value-display content)",
+                    "value": "42"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Count item not found. Returns an error message fragment.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<span class=\"text-red-500\">Item not found</span>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/count-items": {
+      "get": {
+        "operationId": "ListCountItemsAPI",
+        "summary": "Retrieve count items list HTML fragment",
+        "description": "Fetches and displays the initial list of registered count items as an HTML fragment.\n\n### HTMX Specs (from ui-api.md):\n- **Trigger**: `load` (on `#count-item-list`)\n- **Target**: `this` (typically the `#count-item-list` container)\n- **Swap**: `innerHTML`\n- **UI Context**: CountItemManagementUI",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of the count item list fragment.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment representing the list of count items."
+                },
+                "examples": {
+                  "populatedList": {
+                    "summary": "List with multiple items",
+                    "value": "<div class=\"count-item-row\" id=\"row-count-1\">\n  <span class=\"item-name\">Production Counter</span>\n  <span class=\"item-value\" id=\"item-value-count-1\">150</span>\n</div>\n<div class=\"count-item-row\" id=\"row-count-2\">\n  <span class=\"item-name\">Error Counter</span>\n  <span class=\"item-value\" id=\"item-value-count-2\">3</span>\n</div>"
+                  },
+                  "emptyState": {
+                    "summary": "Empty list state",
+                    "value": "<div class=\"empty-state\">No count items registered yet. Click 'Register' to add one.</div>"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

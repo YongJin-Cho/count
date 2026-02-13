@@ -17,6 +17,11 @@ type CountItem struct {
 	Description string `json:"description"`
 }
 
+type CountItemWithValue struct {
+	CountItem
+	Value int `json:"value"`
+}
+
 type CountItemRepository interface {
 	Save(ctx context.Context, item *CountItem) error
 	FindAll(ctx context.Context) ([]CountItem, error)
@@ -29,4 +34,6 @@ type CountItemRepository interface {
 type ValueServiceClient interface {
 	InitializeValue(ctx context.Context, itemId string, initialValue int) error
 	DeleteValue(ctx context.Context, itemId string) error
+	GetValue(ctx context.Context, itemId string) (int, error)
+	GetValues(ctx context.Context, itemIds []string) (map[string]int, error)
 }

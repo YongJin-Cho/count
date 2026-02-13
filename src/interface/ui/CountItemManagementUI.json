@@ -125,6 +125,32 @@
                   ]
                 },
                 {
+                  "id": "item-value-display-{id}",
+                  "type": "Container",
+                  "className": "px-4 py-1 bg-gray-50 rounded border border-gray-200 text-center min-w-[80px] mx-4",
+                  "components": [
+                    {
+                      "id": "item-value-{id}",
+                      "type": "Text",
+                      "content": "{value}",
+                      "className": "text-lg font-mono font-bold text-indigo-600 cursor-pointer",
+                      "title": "Click to refresh",
+                      "htmx_spec": {
+                        "hx_get": "/ui/counts/{id}/value",
+                        "hx_trigger": "every 30s, click",
+                        "hx_target": "this",
+                        "hx_swap": "innerHTML"
+                      }
+                    },
+                    {
+                      "id": "item-value-label-{id}",
+                      "type": "Text",
+                      "content": "current value",
+                      "className": "text-[10px] text-gray-400 uppercase tracking-tighter"
+                    }
+                  ]
+                },
+                {
                   "id": "item-actions-{id}",
                   "type": "Group",
                   "className": "flex items-center space-x-4 ml-4",

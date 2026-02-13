@@ -13,10 +13,12 @@ import (
 )
 
 type MockService struct {
-	RegisterItemFunc func(ctx context.Context, name, description string) (*domain.CountItem, error)
-	ListItemFunc     func(ctx context.Context) ([]domain.CountItem, error)
-	DeleteItemFunc   func(ctx context.Context, id string) error
-	UpdateItemFunc   func(ctx context.Context, id, name, description string) (*domain.CountItem, error)
+	RegisterItemFunc       func(ctx context.Context, name, description string) (*domain.CountItem, error)
+	ListItemFunc           func(ctx context.Context) ([]domain.CountItem, error)
+	ListItemWithValuesFunc func(ctx context.Context) ([]domain.CountItemWithValue, error)
+	DeleteItemFunc         func(ctx context.Context, id string) error
+	UpdateItemFunc         func(ctx context.Context, id, name, description string) (*domain.CountItem, error)
+	GetItemValueFunc       func(ctx context.Context, id string) (int, error)
 }
 
 func (m *MockService) RegisterItem(ctx context.Context, name, description string) (*domain.CountItem, error) {
@@ -25,11 +27,17 @@ func (m *MockService) RegisterItem(ctx context.Context, name, description string
 func (m *MockService) ListItem(ctx context.Context) ([]domain.CountItem, error) {
 	return m.ListItemFunc(ctx)
 }
+func (m *MockService) ListItemWithValues(ctx context.Context) ([]domain.CountItemWithValue, error) {
+	return m.ListItemWithValuesFunc(ctx)
+}
 func (m *MockService) DeleteItem(ctx context.Context, id string) error {
 	return m.DeleteItemFunc(ctx, id)
 }
 func (m *MockService) UpdateItem(ctx context.Context, id, name, description string) (*domain.CountItem, error) {
 	return m.UpdateItemFunc(ctx, id, name, description)
+}
+func (m *MockService) GetItemValue(ctx context.Context, id string) (int, error) {
+	return m.GetItemValueFunc(ctx, id)
 }
 
 func TestRegisterItemUI(t *testing.T) {

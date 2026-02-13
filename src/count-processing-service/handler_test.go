@@ -226,12 +226,82 @@ func TestCountValueHandler_ExternalAPI(t *testing.T) {
 
 		assert.Equal(t, http.StatusNotFound, resp.Code)
 	})
+
+	t.Run("get single external success", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			GetFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: "item-1", CurrentValue: 42}, nil
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/counts/item-1/value", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		var actual map[string]interface{}
+		json.Unmarshal(resp.Body.Bytes(), &actual)
+		assert.Equal(t, "item-1", actual["itemId"])
+		assert.Equal(t, float64(42), actual["currentValue"])
+	})
+
+	t.Run("get single external not found", func(t *testing.T) {
+		mockUC := &MockCountValueUseCase{
+			GetFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+				return nil, domain.ErrNotFound
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/counts/item-1/value", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusNotFound, resp.Code)
+	})
+
+	t.Run("get all external success", func(t *testing.T) {
+		counts := []domain.CountValue{
+			{ItemID: "item-1", CurrentValue: 10},
+			{ItemID: "item-2", CurrentValue: 20},
+		}
+		mockUC := &MockCountValueUseCase{
+			GetAllFunc: func(ctx context.Context) ([]domain.CountValue, error) {
+				return counts, nil
+			},
+		}
+		handler := inbound.NewCountValueHandler(mockUC)
+		r := gin.New()
+		handler.RegisterRoutes(r)
+
+		req, _ := http.NewRequest(http.MethodGet, "/api/v1/counts/values", nil)
+		resp := httptest.NewRecorder()
+
+		r.ServeHTTP(resp, req)
+
+		assert.Equal(t, http.StatusOK, resp.Code)
+		var actual []map[string]interface{}
+		json.Unmarshal(resp.Body.Bytes(), &actual)
+		assert.Len(t, actual, 2)
+		assert.Equal(t, "item-1", actual[0]["itemId"])
+		assert.Equal(t, float64(10), actual[0]["currentValue"])
+		assert.Equal(t, "item-2", actual[1]["itemId"])
+		assert.Equal(t, float64(20), actual[1]["currentValue"])
+	})
 }
 
 type MockCountValueUseCase struct {
 	InitializeFunc  func(ctx context.Context, itemID string, initialValue int) (*domain.CountValue, error)
 	GetFunc         func(ctx context.Context, itemID string) (*domain.CountValue, error)
 	GetMultipleFunc func(ctx context.Context, itemIDs []string) ([]domain.CountValue, error)
+	GetAllFunc      func(ctx context.Context) ([]domain.CountValue, error)
 	DeleteFunc      func(ctx context.Context, itemID string) error
 	IncreaseFunc    func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error)
 	DecreaseFunc    func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error)
@@ -248,6 +318,10 @@ func (m *MockCountValueUseCase) Get(ctx context.Context, itemID string) (*domain
 
 func (m *MockCountValueUseCase) GetMultiple(ctx context.Context, itemIDs []string) ([]domain.CountValue, error) {
 	return m.GetMultipleFunc(ctx, itemIDs)
+}
+
+func (m *MockCountValueUseCase) GetAll(ctx context.Context) ([]domain.CountValue, error) {
+	return m.GetAllFunc(ctx)
 }
 
 func (m *MockCountValueUseCase) Delete(ctx context.Context, itemID string) error {

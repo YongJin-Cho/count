@@ -1,3 +1,3 @@
 # CountItemManagementUI UI-Events
 
-No custom UI-Events were identified for this UI based on the current design specification.
+No custom UI-Events were identified for this UI based on the current design specification (`src/interface/ui/CountItemManagementUI.json`).

@@ -24,12 +24,57 @@ func (h *CountValueHandler) RegisterRoutes(r *gin.Engine) {
 		internal.DELETE("/:itemId", h.Delete)
 	}
 
-	external := r.Group("/api/v1/counts/:itemId")
+	external := r.Group("/api/v1/counts")
 	{
-		external.POST("/increase", h.Increase)
-		external.POST("/decrease", h.Decrease)
-		external.POST("/reset", h.Reset)
+		external.GET("/values", h.GetAllExternal)
+		item := external.Group("/:itemId")
+		{
+			item.GET("/value", h.GetSingleExternal)
+			item.POST("/increase", h.Increase)
+			item.POST("/decrease", h.Decrease)
+			item.POST("/reset", h.Reset)
+		}
 	}
+}
+
+func (h *CountValueHandler) GetSingleExternal(c *gin.Context) {
+	itemID := c.Param("itemId")
+	count, err := h.useCase.Get(c.Request.Context(), itemID)
+	if err == domain.ErrNotFound {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Count item " + itemID + " not found"})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"itemId":       count.ItemID,
+		"currentValue": count.CurrentValue,
+	})
+}
+
+func (h *CountValueHandler) GetAllExternal(c *gin.Context) {
+	counts, err := h.useCase.GetAll(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
+		return
+	}
+
+	type externalCountValue struct {
+		ItemID       string `json:"itemId"`
+		CurrentValue int    `json:"currentValue"`
+	}
+	var resp []externalCountValue
+	for _, count := range counts {
+		resp = append(resp, externalCountValue{
+			ItemID:       count.ItemID,
+			CurrentValue: count.CurrentValue,
+		})
+	}
+
+	c.JSON(http.StatusOK, resp)
 }
 
 type UpdateRequest struct {

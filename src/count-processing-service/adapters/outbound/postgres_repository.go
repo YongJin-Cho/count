@@ -66,6 +66,16 @@ func (r *postgresRepository) GetByIDs(ctx context.Context, itemIDs []string) ([]
 	return counts, nil
 }
 
+func (r *postgresRepository) GetAll(ctx context.Context) ([]domain.CountValue, error) {
+	query := `SELECT item_id, current_value, last_updated_at FROM count_values`
+	var counts []domain.CountValue
+	err := r.db.SelectContext(ctx, &counts, query)
+	if err != nil {
+		return nil, err
+	}
+	return counts, nil
+}
+
 func (r *postgresRepository) Delete(ctx context.Context, itemID string) error {
 	query := `DELETE FROM count_values WHERE item_id = $1`
 	_, err := r.db.ExecContext(ctx, query, itemID)
