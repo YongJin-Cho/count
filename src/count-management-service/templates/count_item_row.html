@@ -1,0 +1,13 @@
+<tr class="count-item-row" id="count-item-{{.ID}}">
+    <td>{{.Name}}</td>
+    <td>{{.Description}}</td>
+    <td>
+        <button class="btn btn-danger" 
+                hx-delete="/ui/count-items/{{.ID}}" 
+                hx-target="#count-item-{{.ID}}" 
+                hx-swap="outerHTML"
+                id="btn-delete-{{.ID}}">
+            Delete
+        </button>
+    </td>
+</tr>

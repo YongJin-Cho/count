@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: count-processing-service
+  namespace: count-system
+  labels:
+    app: count-processing-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: count-processing-service
+  template:
+    metadata:
+      labels:
+        app: count-processing-service
+    spec:
+      containers:
+      - name: backend
+        image: count-processing-service:latest
+        imagePullPolicy: Never
+        env:
+        - name: DB_HOST
+          value: processing-db
+        - name: DB_PORT
+          value: "5432"
+        - name: DB_USER
+          value: postgres
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: count-secrets
+              key: db-password
+        - name: DB_NAME
+          value: processing_db
+        - name: PORT
+          value: "8080"
+        ports:
+        - containerPort: 8080
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        # health check if available (Gin serves default 404 on /, but we can use that or a real endpoint)
+        # Actually I should check if there's a /health endpoint.
+        # Looking at main.go, there isn't one explicitly. But Gin will return 404 for /.
+        # Let's see if there are any other routes.
+        # The code shows handler.RegisterRoutes(r)
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: count-processing-service
+  namespace: count-system
+spec:
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: count-processing-service

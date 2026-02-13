@@ -1,0 +1,98 @@
+{
+  "ui_id": "CountItemUpdateUI",
+  "layout": "stack",
+  "components": [
+    {
+      "id": "nav-container",
+      "type": "Container",
+      "components": [
+        {
+          "id": "link-back-dashboard",
+          "type": "Link",
+          "label": "← Back to Dashboard",
+          "htmx_spec": {
+            "hx_get": "/ui/counts",
+            "hx_target": "body",
+            "hx_push_url": "true"
+          }
+        }
+      ]
+    },
+    {
+      "id": "edit-form-container",
+      "type": "Main",
+      "components": [
+        {
+          "id": "page-title",
+          "type": "Heading",
+          "level": 1,
+          "text": "Edit Count Item"
+        },
+        {
+          "id": "validation-error-area",
+          "type": "Container",
+          "description": "Target area for validation error messages from the server",
+          "className": "error-messages",
+          "content": ""
+        },
+        {
+          "id": "count-item-update-form",
+          "type": "Form",
+          "htmx_spec": {
+            "hx_put": "/ui/counts/{count_id}",
+            "hx_trigger": "submit",
+            "hx_target": "body",
+            "hx_swap": "outerHTML",
+            "hx_indicator": "#update-progress"
+          },
+          "fields": [
+            {
+              "id": "input-name",
+              "name": "name",
+              "type": "text",
+              "label": "Count Item Name",
+              "placeholder": "Enter name",
+              "required": true,
+              "value": "{item.name}",
+              "description": "Pre-filled with existing name"
+            },
+            {
+              "id": "input-description",
+              "name": "description",
+              "type": "textarea",
+              "label": "Description",
+              "placeholder": "Optional description",
+              "value": "{item.description}",
+              "description": "Pre-filled with existing description"
+            }
+          ],
+          "actions": [
+            {
+              "id": "btn-save",
+              "type": "Button",
+              "label": "Save Changes",
+              "attributes": {
+                "type": "submit"
+              }
+            },
+            {
+              "id": "btn-cancel",
+              "type": "Button",
+              "label": "Cancel",
+              "htmx_spec": {
+                "hx_get": "/ui/counts",
+                "hx_target": "body"
+              }
+            }
+          ]
+        },
+        {
+          "id": "update-progress",
+          "type": "Indicator",
+          "className": "htmx-indicator",
+          "content": "Updating count item..."
+        }
+      ]
+    }
+  ]
+}

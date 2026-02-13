@@ -1,0 +1,162 @@
+{
+  "ui_id": "CountItemManagementUI",
+  "layout": "stack",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "Header",
+      "title": "Count Item Management",
+      "description": "Register and manage your count items for tracking."
+    },
+    {
+      "id": "registration-section",
+      "type": "Section",
+      "title": "Register New Item",
+      "className": "mb-8 p-6 bg-white rounded shadow",
+      "components": [
+        {
+          "id": "registration-form",
+          "type": "Form",
+          "className": "space-y-4",
+          "fields": [
+            {
+              "id": "input-name",
+              "name": "name",
+              "type": "text",
+              "label": "Item Name",
+              "placeholder": "e.g. Daily Sales",
+              "required": true,
+              "className": "block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            },
+            {
+              "id": "input-description",
+              "name": "description",
+              "type": "textarea",
+              "label": "Description",
+              "placeholder": "Optional description of what this counter tracks",
+              "required": false,
+              "className": "block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500"
+            }
+          ],
+          "actions": [
+            {
+              "id": "btn-register",
+              "type": "Button",
+              "label": "Register Item",
+              "style": "primary",
+              "className": "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500",
+              "htmx_spec": {
+                "hx_post": "/ui/count-items",
+                "hx_trigger": "click",
+                "hx_target": "#count-item-list",
+                "hx_swap": "beforeend",
+                "hx_indicator": "#registration-spinner",
+                "hx_on": "htmx:afterRequest: if(event.detail.successful) this.closest('form').reset();"
+              }
+            }
+          ]
+        },
+        {
+          "id": "registration-spinner",
+          "type": "Indicator",
+          "content": "Registering...",
+          "className": "htmx-indicator mt-2 text-sm text-gray-500"
+        },
+        {
+          "id": "registration-error-container",
+          "type": "Container",
+          "className": "mt-2 text-sm text-red-600",
+          "content": ""
+        }
+      ]
+    },
+    {
+      "id": "list-section",
+      "type": "Section",
+      "title": "Registered Items",
+      "className": "bg-white rounded shadow overflow-hidden",
+      "components": [
+        {
+          "id": "count-item-list",
+          "type": "Container",
+          "className": "divide-y divide-gray-200 min-h-[100px]",
+          "htmx_spec": {
+            "hx_get": "/ui/count-items",
+            "hx_trigger": "load",
+            "hx_target": "this",
+            "hx_swap": "innerHTML"
+          },
+          "dynamic_content": {
+            "empty_state": {
+              "id": "empty-state-message",
+              "type": "Container",
+              "className": "p-10 text-center",
+              "components": [
+                {
+                  "id": "empty-text",
+                  "type": "Text",
+                  "content": "No count items registered yet.",
+                  "className": "text-gray-500 font-medium"
+                }
+              ]
+            },
+            "item_template": {
+              "id": "count-item-{id}",
+              "type": "Row",
+              "className": "p-4 flex justify-between items-center hover:bg-gray-50 count-item-row",
+              "components": [
+                {
+                  "id": "item-content-{id}",
+                  "type": "Stack",
+                  "className": "flex-1",
+                  "components": [
+                    {
+                      "id": "item-name-{id}",
+                      "type": "Text",
+                      "content": "{name}",
+                      "className": "text-lg font-semibold text-gray-900"
+                    },
+                    {
+                      "id": "item-desc-{id}",
+                      "type": "Text",
+                      "content": "{description}",
+                      "className": "text-sm text-gray-500"
+                    }
+                  ]
+                },
+                {
+                  "id": "item-actions-{id}",
+                  "type": "Group",
+                  "className": "flex items-center space-x-4 ml-4",
+                  "components": [
+                    {
+                      "id": "btn-edit-{id}",
+                      "type": "Link",
+                      "label": "Edit",
+                      "url": "/ui/count-items/{id}/edit",
+                      "className": "text-indigo-600 hover:text-indigo-900 font-medium"
+                    },
+                    {
+                      "id": "btn-delete-{id}",
+                      "type": "Button",
+                      "label": "Delete",
+                      "className": "text-red-600 hover:text-red-900 font-medium",
+                      "htmx_spec": {
+                        "hx_delete": "/ui/count-items/{id}",
+                        "hx_trigger": "click",
+                        "hx_target": "closest .count-item-row",
+                        "hx_swap": "outerHTML",
+                        "hx_confirm": "Are you sure you want to delete '{name}'? This action cannot be undone.",
+                        "hx_indicator": "this"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

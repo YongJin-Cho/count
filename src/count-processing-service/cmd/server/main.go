@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"count-processing-service/adapters/inbound"
 	"count-processing-service/adapters/outbound"
 	"count-processing-service/domain"
@@ -29,6 +30,9 @@ func main() {
 	}
 
 	repo := outbound.NewPostgresRepository(db)
+	if err := repo.Init(context.Background()); err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
 	useCase := domain.NewCountValueUseCase(repo)
 	handler := inbound.NewCountValueHandler(useCase)
 

@@ -6,10 +6,18 @@ import (
 )
 
 type MockCountValueRepository struct {
+	InitFunc     func(ctx context.Context) error
 	CreateFunc   func(ctx context.Context, count *domain.CountValue) error
 	GetByIDFunc  func(ctx context.Context, itemID string) (*domain.CountValue, error)
 	GetByIDsFunc func(ctx context.Context, itemIDs []string) ([]domain.CountValue, error)
 	DeleteFunc   func(ctx context.Context, itemID string) error
+}
+
+func (m *MockCountValueRepository) Init(ctx context.Context) error {
+	if m.InitFunc != nil {
+		return m.InitFunc(ctx)
+	}
+	return nil
 }
 
 func (m *MockCountValueRepository) Create(ctx context.Context, count *domain.CountValue) error {

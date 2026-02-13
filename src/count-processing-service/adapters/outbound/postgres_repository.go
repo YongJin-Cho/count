@@ -16,6 +16,17 @@ func NewPostgresRepository(db *sqlx.DB) domain.CountValueRepository {
 	return &postgresRepository{db: db}
 }
 
+func (r *postgresRepository) Init(ctx context.Context) error {
+	query := `
+	CREATE TABLE IF NOT EXISTS count_values (
+		item_id TEXT PRIMARY KEY,
+		current_value INTEGER DEFAULT 0,
+		last_updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+	);`
+	_, err := r.db.ExecContext(ctx, query)
+	return err
+}
+
 func (r *postgresRepository) Create(ctx context.Context, count *domain.CountValue) error {
 	query := `INSERT INTO count_values (item_id, current_value, last_updated_at) VALUES ($1, $2, NOW())`
 	_, err := r.db.ExecContext(ctx, query, count.ItemID, count.CurrentValue)

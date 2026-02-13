@@ -1,0 +1,268 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Count Item Management API",
+    "description": "External API for managing count item metadata (register, list, update, delete). Used by Internal systems or Partners.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/count-items": {
+      "get": {
+        "summary": "List all count items",
+        "description": "Retrieves a list of all registered count items including their IDs, names, and optional descriptions.",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the list of count items.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CountItem"
+                  }
+                },
+                "example": [
+                  {
+                    "id": "item-123",
+                    "name": "Inventory",
+                    "description": "Stock count for warehouse A"
+                  },
+                  {
+                    "id": "item-456",
+                    "name": "Sales",
+                    "description": "Daily sales count"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Register a new count item",
+        "description": "Registers a new count item with a unique name and an optional description.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCountItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully created the count item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation error (e.g., empty name).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - A count item with the same name already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/count-items/{id}": {
+      "parameters": [
+        {
+          "name": "id",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "The unique ID of the count item."
+        }
+      ],
+      "put": {
+        "summary": "Update an existing count item",
+        "description": "Updates the name and/or description of an existing count item.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCountItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully updated the count item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountItem"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Validation error (e.g., empty name).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Count item with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - Another count item with the same name already exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a count item",
+        "description": "Deletes the count item with the specified ID.",
+        "responses": {
+          "200": {
+            "description": "Successfully deleted the count item.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Count item deleted successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Count item with the specified ID does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CountItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "example": "item-123"
+          },
+          "name": {
+            "type": "string",
+            "example": "Inventory"
+          },
+          "description": {
+            "type": "string",
+            "example": "Stock count for warehouse A"
+          }
+        }
+      },
+      "CreateCountItemRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Inventory"
+          },
+          "description": {
+            "type": "string",
+            "example": "Stock count for warehouse A"
+          }
+        }
+      },
+      "UpdateCountItemRequest": {
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "example": "Main Inventory"
+          },
+          "description": {
+            "type": "string",
+            "example": "Updated stock count"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "Error message"
+          },
+          "code": {
+            "type": "string",
+            "example": "NAME_REQUIRED"
+          }
+        }
+      }
+    }
+  }
+}

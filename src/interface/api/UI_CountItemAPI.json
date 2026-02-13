@@ -1,0 +1,224 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "UI_CountItemAPI",
+    "description": "HTMX-based UI APIs for Count Item Management, including registration, listing, deletion, and updates. This spec covers the user flows for Issue #bdd91e8.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/ui/count-items": {
+      "post": {
+        "operationId": "RegisterCountItemAPI",
+        "summary": "Register a new count item",
+        "description": "Registers a new count item and appends the new item fragment to the list. (Trigger: click on btn-register, Target: #count-item-list, Swap: beforeend, UI: CountItemManagementUI)",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The unique name of the count item to register."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "An optional description for the count item."
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful registration. Returns the HTML fragment for the newly created count item row.",
+            "content": {
+              "text/html": {
+                "example": "<tr class=\"count-item-row\" id=\"count-item-123\"><td>Inventory</td><td>Stock count for warehouse A</td><td><button id=\"btn-delete-123\">Delete</button></td></tr>"
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request. Returns an HTML fragment containing the validation error message (e.g., empty name).",
+            "content": {
+              "text/html": {
+                "example": "<div id=\"registration-error\" class=\"text-red-500\">Name is required.</div>"
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict. Returns an HTML fragment stating that the name must be unique.",
+            "content": {
+              "text/html": {
+                "example": "<div id=\"registration-error\" class=\"text-red-500\">A count item with this name already exists.</div>"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "ListCountItemsAPI",
+        "summary": "List all registered count items",
+        "description": "Fetches and displays the initial list of registered count items. (Trigger: load on #count-item-list, Target: this, Swap: innerHTML, UI: CountItemManagementUI)",
+        "responses": {
+          "200": {
+            "description": "Successful retrieval. Returns an HTML fragment containing the list of count items or an empty state message.",
+            "content": {
+              "text/html": {
+                "examples": {
+                  "itemsList": {
+                    "summary": "List with items",
+                    "value": "<tr class=\"count-item-row\"><td>Inventory</td><td>Warehouse A</td></tr><tr class=\"count-item-row\"><td>Tools</td><td>Workshop</td></tr>"
+                  },
+                  "emptyState": {
+                    "summary": "Empty list",
+                    "value": "<tr><td colspan=\"3\" class=\"text-center\">No count items registered yet.</td></tr>"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/count-items/{id}": {
+      "delete": {
+        "operationId": "DeleteCountItemAPI",
+        "summary": "Delete a count item",
+        "description": "Deletes a count item and removes its row fragment from the list. (Trigger: click on btn-delete-{id}, Target: closest .count-item-row, Swap: outerHTML, UI: CountItemManagementUI)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the count item to delete.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful deletion. Returns an empty HTML fragment to facilitate removal of the element via HTMX.",
+            "content": {
+              "text/html": {
+                "example": ""
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found. Returns an HTML fragment with an error message.",
+            "content": {
+              "text/html": {
+                "example": "<div class=\"error-toast\">Count item not found.</div>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts": {
+      "get": {
+        "operationId": "CountItemUpdateUI_GetDashboardAPI",
+        "summary": "Get Dashboard UI fragment",
+        "description": "Returns the HTML fragment for the Count Item Management Dashboard. (Trigger: click on link-back-dashboard/btn-cancel, Target: body, UI: CountItemUpdateUI)",
+        "responses": {
+          "200": {
+            "description": "Dashboard fragment.",
+            "content": {
+              "text/html": {
+                "example": "<div id=\"dashboard-container\">...Dashboard Content...</div>"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ui/counts/{count_id}": {
+      "put": {
+        "operationId": "CountItemUpdateUI_UpdateItemAPI",
+        "summary": "Update a count item",
+        "description": "Updates the count item metadata (name, description). (Trigger: submit, Target: body, Swap: outerHTML, UI: CountItemUpdateUI)",
+        "parameters": [
+          {
+            "name": "count_id",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the count item to update.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The new name for the count item."
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "The new description for the count item."
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful update. Returns the Dashboard UI fragment or uses HX-Redirect to navigate.",
+            "headers": {
+              "HX-Redirect": {
+                "description": "URL to redirect to upon success (e.g., the dashboard).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "text/html": {
+                "example": "<div id=\"dashboard-container\">...Updated Dashboard...</div>"
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failure. Returns the edit form fragment with error messages.",
+            "content": {
+              "text/html": {
+                "example": "<div id=\"validation-error-area\" class=\"text-red-500\">Name cannot be empty.</div>"
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found. Returns an HTML fragment with an error message.",
+            "content": {
+              "text/html": {
+                "example": "<div class=\"error-message\">Item not found.</div>"
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict. Returns an HTML fragment stating the name is already in use.",
+            "content": {
+              "text/html": {
+                "example": "<div id=\"validation-error-area\" class=\"text-red-500\">Name already in use by another item.</div>"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

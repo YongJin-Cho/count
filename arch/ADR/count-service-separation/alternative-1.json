@@ -1,0 +1,69 @@
+{
+    "interfaces": [
+        {
+            "name": "CountItemAPI",
+            "type": "API",
+            "description": "External API for managing count item metadata."
+        },
+        {
+            "name": "CountItemManagementUI",
+            "type": "API",
+            "description": "UI API for management screens."
+        },
+        {
+            "name": "PostgreSQL",
+            "type": "API",
+            "description": "Database interface."
+        }
+    ],
+    "components": [
+        {
+            "type": "MSA.Component",
+            "name": "CountAPIComponent",
+            "description": "Monolithic backend handling both metadata and count values.",
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI"],
+            "required-interfaces": ["PostgreSQL"],
+            "properties": [
+                {
+                    "container": {
+                        "image": "count-api-service"
+                    }
+                }
+            ]
+        },
+        {
+            "type": "MSA.Component.PostgreSQL",
+            "name": "CountPostgreSQL",
+            "description": "Shared database for metadata and count values.",
+            "providing-interfaces": ["PostgreSQL"]
+        },
+        {
+            "type": "MSA.Service",
+            "name": "count-api-service",
+            "description": "Single service for all count-related operations.",
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI"],
+            "required-interfaces": [],
+            "components": {
+                "backend": "CountAPIComponent",
+                "db": "CountPostgreSQL"
+            },
+            "connectors": [
+                {
+                    "from": "backend",
+                    "to": "db",
+                    "interface": "PostgreSQL"
+                }
+            ]
+        },
+        {
+            "type": "MSA.System",
+            "name": "CountManagementSystem",
+            "description": "Single service architecture.",
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI"],
+            "required-interfaces": [],
+            "components": {
+                "apiService": "count-api-service"
+            }
+        }
+    ]
+}

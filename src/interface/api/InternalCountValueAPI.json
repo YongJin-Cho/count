@@ -1,0 +1,237 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "InternalCountValueAPI",
+    "description": "Internal interface for managing and retrieving count values, used for communication between management and processing services (Alternative 2: Separated Architecture).",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1/internal",
+      "description": "Internal API base URL"
+    }
+  ],
+  "paths": {
+    "/counts": {
+      "post": {
+        "summary": "Initialize count value",
+        "description": "Initializes a new count value for a given count item ID. This is typically called by the count-management-service when a new count item is registered.",
+        "operationId": "initializeCount",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["itemId"],
+                "properties": {
+                  "itemId": {
+                    "type": "string",
+                    "description": "The unique identifier of the count item.",
+                    "example": "item-123"
+                  },
+                  "initialValue": {
+                    "type": "integer",
+                    "description": "The starting value for the count.",
+                    "default": 0,
+                    "example": 0
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successfully initialized count value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountValue"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid input data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict - Count value already initialized for this itemId.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "Retrieve multiple count values",
+        "description": "Retrieves the current count values for a list of count items. Useful for listing count items with their current values.",
+        "operationId": "getCountValues",
+        "parameters": [
+          {
+            "name": "itemIds",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "description": "List of count item IDs to retrieve values for.",
+            "style": "form",
+            "explode": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved count values.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "counts": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/CountValue"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/counts/{itemId}": {
+      "parameters": [
+        {
+          "name": "itemId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string"
+          },
+          "description": "The unique ID of the count item."
+        }
+      ],
+      "get": {
+        "summary": "Retrieve single count value",
+        "description": "Retrieves the current count value for a specific count item.",
+        "operationId": "getCountValue",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved count value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CountValue"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Count value for the given itemId does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete count value",
+        "description": "Deletes the count value for a specific count item. Called when a count item is deleted in management service.",
+        "operationId": "deleteCountValue",
+        "responses": {
+          "200": {
+            "description": "Successfully deleted count value.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Count value deleted successfully."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found - Count value for the given itemId does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CountValue": {
+        "type": "object",
+        "required": [
+          "itemId",
+          "currentValue"
+        ],
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "description": "The unique identifier of the count item.",
+            "example": "item-123"
+          },
+          "currentValue": {
+            "type": "integer",
+            "description": "The current count value.",
+            "example": 42
+          },
+          "lastUpdatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The timestamp when the count value was last updated.",
+            "example": "2026-02-13T09:00:00Z"
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message.",
+            "example": "Item not found"
+          },
+          "code": {
+            "type": "string",
+            "description": "Internal error code.",
+            "example": "NOT_FOUND"
+          }
+        }
+      }
+    }
+  }
+}

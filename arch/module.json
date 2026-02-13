@@ -1,0 +1,34 @@
+{
+    "modules": [
+        {
+            "name": "count-management-service",
+            "description": "Service for managing count item metadata and providing the management UI.",
+            "properties": [
+                {
+                    "output": {
+                        "type": "image",
+                        "name": "count-management-service"
+                    }
+                }
+            ]
+        },
+        {
+            "name": "count-processing-service",
+            "description": "Service for processing count value operations.",
+            "properties": [
+                {
+                    "output": {
+                        "type": "image",
+                        "name": "count-processing-service"
+                    }
+                }
+            ]
+        }
+    ],
+    "dependencies": [
+        {
+            "from": "count-management-service",
+            "to": "count-processing-service"
+        }
+    ]
+}
