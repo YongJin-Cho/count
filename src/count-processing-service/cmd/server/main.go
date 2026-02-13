@@ -30,10 +30,11 @@ func main() {
 	}
 
 	repo := outbound.NewPostgresRepository(db)
+	historyRepo := outbound.NewPostgresHistoryRepository(db)
 	if err := repo.Init(context.Background()); err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
 	}
-	useCase := domain.NewCountValueUseCase(repo)
+	useCase := domain.NewCountValueUseCase(repo, historyRepo)
 	handler := inbound.NewCountValueHandler(useCase)
 
 	r := gin.Default()

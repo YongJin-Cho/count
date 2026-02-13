@@ -41,6 +41,7 @@ type MockValueServiceClient struct {
 	DeleteValueFunc     func(ctx context.Context, itemId string) error
 	GetValueFunc        func(ctx context.Context, itemId string) (int, error)
 	GetValuesFunc       func(ctx context.Context, itemIds []string) (map[string]int, error)
+	GetHistoryFunc      func(ctx context.Context, itemId string) ([]domain.HistoryEntry, error)
 }
 
 func (m *MockValueServiceClient) InitializeValue(ctx context.Context, itemId string, initialValue int) error {
@@ -54,4 +55,7 @@ func (m *MockValueServiceClient) GetValue(ctx context.Context, itemId string) (i
 }
 func (m *MockValueServiceClient) GetValues(ctx context.Context, itemIds []string) (map[string]int, error) {
 	return m.GetValuesFunc(ctx, itemIds)
+}
+func (m *MockValueServiceClient) GetHistory(ctx context.Context, itemId string) ([]domain.HistoryEntry, error) {
+	return m.GetHistoryFunc(ctx, itemId)
 }

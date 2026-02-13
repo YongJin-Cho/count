@@ -49,6 +49,18 @@ func (u *countItemUseCase) ListItem(ctx context.Context) ([]CountItem, error) {
 	return u.repo.FindAll(ctx)
 }
 
+func (u *countItemUseCase) GetItemHistory(ctx context.Context, id string) ([]HistoryEntry, error) {
+	item, err := u.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if item == nil {
+		return nil, ErrItemNotFound
+	}
+
+	return u.valueClient.GetHistory(ctx, id)
+}
+
 func (u *countItemUseCase) ListItemWithValues(ctx context.Context) ([]CountItemWithValue, error) {
 	items, err := u.repo.FindAll(ctx)
 	if err != nil {

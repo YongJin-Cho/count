@@ -3,6 +3,7 @@ package domain
 import (
 	"context"
 	"errors"
+	"time"
 )
 
 var (
@@ -22,6 +23,13 @@ type CountItemWithValue struct {
 	Value int `json:"value"`
 }
 
+type HistoryEntry struct {
+	Timestamp time.Time `json:"timestamp"`
+	Type      string    `json:"type"`
+	Change    int       `json:"change"`
+	Source    string    `json:"source"`
+}
+
 type CountItemRepository interface {
 	Save(ctx context.Context, item *CountItem) error
 	FindAll(ctx context.Context) ([]CountItem, error)
@@ -36,4 +44,5 @@ type ValueServiceClient interface {
 	DeleteValue(ctx context.Context, itemId string) error
 	GetValue(ctx context.Context, itemId string) (int, error)
 	GetValues(ctx context.Context, itemIds []string) (map[string]int, error)
+	GetHistory(ctx context.Context, itemId string) ([]HistoryEntry, error)
 }

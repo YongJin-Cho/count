@@ -141,3 +141,31 @@ func (c *valueServiceClient) GetValues(ctx context.Context, itemIds []string) (m
 	}
 	return values, nil
 }
+
+func (c *valueServiceClient) GetHistory(ctx context.Context, itemId string) ([]domain.HistoryEntry, error) {
+	url := fmt.Sprintf("%s/api/v1/counts/%s/history", c.baseURL, itemId)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == 404 {
+		return nil, domain.ErrItemNotFound
+	}
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("failed to get history: status %d", resp.StatusCode)
+	}
+
+	var history []domain.HistoryEntry
+	if err := json.NewDecoder(resp.Body).Decode(&history); err != nil {
+		return nil, err
+	}
+
+	return history, nil
+}

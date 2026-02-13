@@ -10,17 +10,19 @@ type CountValueUseCase interface {
 	GetMultiple(ctx context.Context, itemIDs []string) ([]CountValue, error)
 	GetAll(ctx context.Context) ([]CountValue, error)
 	Delete(ctx context.Context, itemID string) error
-	Increase(ctx context.Context, itemID string, amount int) (*CountValue, error)
-	Decrease(ctx context.Context, itemID string, amount int) (*CountValue, error)
-	Reset(ctx context.Context, itemID string) (*CountValue, error)
+	Increase(ctx context.Context, itemID string, amount int, source string) (*CountValue, error)
+	Decrease(ctx context.Context, itemID string, amount int, source string) (*CountValue, error)
+	Reset(ctx context.Context, itemID string, source string) (*CountValue, error)
+	GetHistory(ctx context.Context, itemID string) ([]CountLog, error)
 }
 
 type countValueUseCase struct {
-	repo CountValueRepository
+	repo        CountValueRepository
+	historyRepo CountHistoryRepository
 }
 
-func NewCountValueUseCase(repo CountValueRepository) CountValueUseCase {
-	return &countValueUseCase{repo: repo}
+func NewCountValueUseCase(repo CountValueRepository, historyRepo CountHistoryRepository) CountValueUseCase {
+	return &countValueUseCase{repo: repo, historyRepo: historyRepo}
 }
 
 func (u *countValueUseCase) Initialize(ctx context.Context, itemID string, initialValue int) (*CountValue, error) {
@@ -75,8 +77,8 @@ func (u *countValueUseCase) Delete(ctx context.Context, itemID string) error {
 	return u.repo.Delete(ctx, itemID)
 }
 
-func (u *countValueUseCase) Increase(ctx context.Context, itemID string, amount int) (*CountValue, error) {
-	val, err := u.repo.Increase(ctx, itemID, amount)
+func (u *countValueUseCase) Increase(ctx context.Context, itemID string, amount int, source string) (*CountValue, error) {
+	val, err := u.repo.Increase(ctx, itemID, amount, source)
 	if err != nil {
 		return nil, err
 	}
@@ -86,8 +88,8 @@ func (u *countValueUseCase) Increase(ctx context.Context, itemID string, amount 
 	return val, nil
 }
 
-func (u *countValueUseCase) Decrease(ctx context.Context, itemID string, amount int) (*CountValue, error) {
-	val, err := u.repo.Decrease(ctx, itemID, amount)
+func (u *countValueUseCase) Decrease(ctx context.Context, itemID string, amount int, source string) (*CountValue, error) {
+	val, err := u.repo.Decrease(ctx, itemID, amount, source)
 	if err != nil {
 		return nil, err
 	}
@@ -97,8 +99,8 @@ func (u *countValueUseCase) Decrease(ctx context.Context, itemID string, amount 
 	return val, nil
 }
 
-func (u *countValueUseCase) Reset(ctx context.Context, itemID string) (*CountValue, error) {
-	val, err := u.repo.Reset(ctx, itemID)
+func (u *countValueUseCase) Reset(ctx context.Context, itemID string, source string) (*CountValue, error) {
+	val, err := u.repo.Reset(ctx, itemID, source)
 	if err != nil {
 		return nil, err
 	}
@@ -106,4 +108,15 @@ func (u *countValueUseCase) Reset(ctx context.Context, itemID string) (*CountVal
 		return nil, ErrNotFound
 	}
 	return val, nil
+}
+
+func (u *countValueUseCase) GetHistory(ctx context.Context, itemID string) ([]CountLog, error) {
+	existing, err := u.repo.GetByID(ctx, itemID)
+	if err != nil {
+		return nil, err
+	}
+	if existing == nil {
+		return nil, ErrNotFound
+	}
+	return u.historyRepo.GetHistory(ctx, itemID)
 }

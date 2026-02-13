@@ -1,0 +1,109 @@
+{
+  "ui_id": "CountItemHistoryUI",
+  "layout": "stack",
+  "components": [
+    {
+      "id": "page-header",
+      "type": "Header",
+      "title": "Count Item Change History",
+      "description": "View the chronological history of all value changes for this count item."
+    },
+    {
+      "id": "history-content-section",
+      "type": "Section",
+      "title": "Change Logs",
+      "className": "mt-8 bg-white shadow overflow-hidden sm:rounded-lg",
+      "components": [
+        {
+          "id": "history-table-container",
+          "type": "Container",
+          "className": "min-h-[300px]",
+          "htmx_spec": {
+            "hx_get": "/ui/counts/{id}/history",
+            "hx_trigger": "load",
+            "hx_target": "this",
+            "hx_swap": "innerHTML",
+            "hx_indicator": "#history-loading-indicator"
+          },
+          "dynamic_content": {
+            "empty_state": {
+              "id": "empty-history",
+              "type": "Container",
+              "className": "text-center py-12",
+              "components": [
+                {
+                  "id": "empty-history-text",
+                  "type": "Text",
+                  "content": "No history records found for this item.",
+                  "className": "text-gray-500 text-sm font-medium"
+                }
+              ]
+            },
+            "table_template": {
+              "id": "history-table",
+              "type": "Table",
+              "className": "min-w-full divide-y divide-gray-200",
+              "headers": [
+                { "label": "Timestamp", "className": "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" },
+                { "label": "Operation", "className": "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" },
+                { "label": "Amount", "className": "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" },
+                { "label": "Source", "className": "px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" }
+              ],
+              "row_template": {
+                "id": "history-row-{entry_id}",
+                "type": "Row",
+                "className": "hover:bg-gray-50",
+                "components": [
+                  {
+                    "id": "cell-timestamp-{entry_id}",
+                    "type": "Cell",
+                    "content": "{timestamp}",
+                    "className": "px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                  },
+                  {
+                    "id": "cell-operation-{entry_id}",
+                    "type": "Cell",
+                    "content": "{operationType}",
+                    "className": "px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
+                  },
+                  {
+                    "id": "cell-amount-{entry_id}",
+                    "type": "Cell",
+                    "content": "{changeAmount}",
+                    "className": "px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                  },
+                  {
+                    "id": "cell-source-{entry_id}",
+                    "type": "Cell",
+                    "content": "{source}",
+                    "className": "px-6 py-4 whitespace-nowrap text-sm text-gray-500"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "history-loading-indicator",
+          "type": "Indicator",
+          "className": "htmx-indicator p-6 text-center text-gray-500",
+          "content": "Fetching history records..."
+        }
+      ]
+    },
+    {
+      "id": "navigation-actions",
+      "type": "Container",
+      "className": "mt-6",
+      "components": [
+        {
+          "id": "btn-back-to-dashboard",
+          "type": "Link",
+          "label": "Back to Dashboard",
+          "url": "/ui/counts",
+          "className": "inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        }
+      ]
+    }
+  ]
+}

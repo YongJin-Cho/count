@@ -24,7 +24,8 @@ func TestCountValueUseCase_Initialize(t *testing.T) {
 				return nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		res, err := uc.Initialize(ctx, "item-1", 10)
 		assert.NoError(t, err)
@@ -38,7 +39,8 @@ func TestCountValueUseCase_Initialize(t *testing.T) {
 				return &domain.CountValue{ItemID: "item-1"}, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		res, err := uc.Initialize(ctx, "item-1", 10)
 		assert.ErrorIs(t, err, domain.ErrAlreadyExists)
@@ -51,7 +53,8 @@ func TestCountValueUseCase_Initialize(t *testing.T) {
 				return nil, assert.AnError
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		res, err := uc.Initialize(ctx, "item-1", 10)
 		assert.ErrorIs(t, err, assert.AnError)
@@ -73,7 +76,8 @@ func TestCountValueUseCase_GetMultiple(t *testing.T) {
 				return expected, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		res, err := uc.GetMultiple(ctx, []string{"item-1", "item-2"})
 		assert.NoError(t, err)
@@ -81,7 +85,8 @@ func TestCountValueUseCase_GetMultiple(t *testing.T) {
 	})
 
 	t.Run("empty", func(t *testing.T) {
-		uc := domain.NewCountValueUseCase(&mocks.MockCountValueRepository{})
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(&mocks.MockCountValueRepository{}, mockHistoryRepo)
 		res, err := uc.GetMultiple(ctx, []string{})
 		assert.NoError(t, err)
 		assert.Empty(t, res)
@@ -101,7 +106,8 @@ func TestCountValueUseCase_GetAll(t *testing.T) {
 				return expected, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		res, err := uc.GetAll(ctx)
 		assert.NoError(t, err)
@@ -122,7 +128,8 @@ func TestCountValueUseCase_Delete(t *testing.T) {
 				return nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		err := uc.Delete(ctx, "item-1")
 		assert.NoError(t, err)
@@ -134,7 +141,8 @@ func TestCountValueUseCase_Delete(t *testing.T) {
 				return nil, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		err := uc.Delete(ctx, "item-1")
 		assert.ErrorIs(t, err, domain.ErrNotFound)
@@ -146,52 +154,57 @@ func TestCountValueUseCase_Updates(t *testing.T) {
 
 	t.Run("increase success", func(t *testing.T) {
 		mockRepo := &mocks.MockCountValueRepository{
-			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int, source string) (*domain.CountValue, error) {
+				assert.Equal(t, "source-A", source)
 				return &domain.CountValue{ItemID: itemID, CurrentValue: 11}, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
-		res, err := uc.Increase(ctx, "item-1", 1)
+		res, err := uc.Increase(ctx, "item-1", 1, "source-A")
 		assert.NoError(t, err)
 		assert.Equal(t, 11, res.CurrentValue)
 	})
 
 	t.Run("increase not found", func(t *testing.T) {
 		mockRepo := &mocks.MockCountValueRepository{
-			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int, source string) (*domain.CountValue, error) {
 				return nil, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
-		res, err := uc.Increase(ctx, "item-1", 1)
+		res, err := uc.Increase(ctx, "item-1", 1, "source-A")
 		assert.ErrorIs(t, err, domain.ErrNotFound)
 		assert.Nil(t, res)
 	})
 
 	t.Run("decrease success", func(t *testing.T) {
 		mockRepo := &mocks.MockCountValueRepository{
-			DecreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+			DecreaseFunc: func(ctx context.Context, itemID string, amount int, source string) (*domain.CountValue, error) {
 				return &domain.CountValue{ItemID: itemID, CurrentValue: 9}, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
-		res, err := uc.Decrease(ctx, "item-1", 1)
+		res, err := uc.Decrease(ctx, "item-1", 1, "source-B")
 		assert.NoError(t, err)
 		assert.Equal(t, 9, res.CurrentValue)
 	})
 
 	t.Run("reset success", func(t *testing.T) {
 		mockRepo := &mocks.MockCountValueRepository{
-			ResetFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+			ResetFunc: func(ctx context.Context, itemID string, source string) (*domain.CountValue, error) {
 				return &domain.CountValue{ItemID: itemID, CurrentValue: 0}, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
-		res, err := uc.Reset(ctx, "item-1")
+		res, err := uc.Reset(ctx, "item-1", "source-C")
 		assert.NoError(t, err)
 		assert.Equal(t, 0, res.CurrentValue)
 	})
@@ -204,14 +217,15 @@ func TestCountValueUseCase_Concurrency(t *testing.T) {
 		currentVal := 0
 		var mu sync.Mutex
 		mockRepo := &mocks.MockCountValueRepository{
-			IncreaseFunc: func(ctx context.Context, itemID string, amount int) (*domain.CountValue, error) {
+			IncreaseFunc: func(ctx context.Context, itemID string, amount int, source string) (*domain.CountValue, error) {
 				mu.Lock()
 				defer mu.Unlock()
 				currentVal += amount
 				return &domain.CountValue{ItemID: itemID, CurrentValue: currentVal}, nil
 			},
 		}
-		uc := domain.NewCountValueUseCase(mockRepo)
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
 
 		var wg sync.WaitGroup
 		numRequests := 100
@@ -219,12 +233,51 @@ func TestCountValueUseCase_Concurrency(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				_, err := uc.Increase(ctx, "item-1", 1)
+				_, err := uc.Increase(ctx, "item-1", 1, "source-X")
 				assert.NoError(t, err)
 			}()
 		}
 		wg.Wait()
 
 		assert.Equal(t, 100, currentVal)
+	})
+}
+
+func TestCountValueUseCase_GetHistory(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("success", func(t *testing.T) {
+		mockRepo := &mocks.MockCountValueRepository{
+			GetByIDFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+				return &domain.CountValue{ItemID: "item-1"}, nil
+			},
+		}
+		expectedLogs := []domain.CountLog{
+			{ItemID: "item-1", OperationType: "increase", ChangeAmount: 5, Source: "A"},
+		}
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{
+			GetHistoryFunc: func(ctx context.Context, itemID string) ([]domain.CountLog, error) {
+				return expectedLogs, nil
+			},
+		}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
+
+		res, err := uc.GetHistory(ctx, "item-1")
+		assert.NoError(t, err)
+		assert.Equal(t, expectedLogs, res)
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		mockRepo := &mocks.MockCountValueRepository{
+			GetByIDFunc: func(ctx context.Context, itemID string) (*domain.CountValue, error) {
+				return nil, nil
+			},
+		}
+		mockHistoryRepo := &mocks.MockCountHistoryRepository{}
+		uc := domain.NewCountValueUseCase(mockRepo, mockHistoryRepo)
+
+		res, err := uc.GetHistory(ctx, "item-1")
+		assert.ErrorIs(t, err, domain.ErrNotFound)
+		assert.Nil(t, res)
 	})
 }

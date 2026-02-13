@@ -26,6 +26,16 @@
             "description": "API for retrieving current count values (specific item or all items)."
         },
         {
+            "name": "CountHistoryAPI",
+            "type": "API",
+            "description": "API for retrieving change history logs for count items."
+        },
+        {
+            "name": "CountItemHistoryUI",
+            "type": "UI",
+            "description": "UI interface (HTMX) for displaying count item change history."
+        },
+        {
             "name": "InternalCountValueAPI",
             "type": "API",
             "description": "Internal API to manage and retrieve count values for specific items."
@@ -41,8 +51,8 @@
             "type": "MSA.Component",
             "name": "ManagementBackend",
             "description": "Handles count item metadata and UI logic (HTMX).",
-            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI", "CountItemMonitoringUI"],
-            "required-interfaces": ["PostgreSQL", "InternalCountValueAPI"],
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI", "CountItemMonitoringUI", "CountItemHistoryUI"],
+            "required-interfaces": ["PostgreSQL", "InternalCountValueAPI", "CountHistoryAPI"],
             "properties": [
                 {
                     "container": {
@@ -68,15 +78,15 @@
         {
             "type": "MSA.Component",
             "name": "ProcessingBackend",
-            "description": "Handles high-frequency count value updates and retrievals.",
-            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI", "CountValueAPI"],
+            "description": "Handles high-frequency count value updates, retrievals, and history logging.",
+            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI", "CountValueAPI", "CountHistoryAPI"],
             "required-interfaces": ["PostgreSQL"],
             "properties": [
                 {
                     "container": {
                         "image": "count-processing-service",
-                        "cpu": "2",
-                        "memory": "4Gi",
+                        "cpu": "3",
+                        "memory": "6Gi",
                         "replicas": 4
                     }
                 }
@@ -85,15 +95,15 @@
         {
             "type": "MSA.Component.PostgreSQL",
             "name": "ProcessingPostgreSQL",
-            "description": "Stores current count values with high integrity.",
+            "description": "Stores current count values and history logs with high integrity.",
             "providing-interfaces": ["PostgreSQL"],
             "required-interfaces": [],
             "properties": [
                 {
                     "container": {
                         "image": "postgres:15-alpine",
-                        "cpu": "2",
-                        "memory": "8Gi"
+                        "cpu": "4",
+                        "memory": "12Gi"
                     }
                 }
             ]
@@ -102,8 +112,8 @@
             "type": "MSA.Service",
             "name": "count-management-service",
             "description": "Service for managing count item metadata and providing the management UI.",
-            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI", "CountItemMonitoringUI"],
-            "required-interfaces": ["InternalCountValueAPI"],
+            "providing-interfaces": ["CountItemAPI", "CountItemManagementUI", "CountItemMonitoringUI", "CountItemHistoryUI"],
+            "required-interfaces": ["InternalCountValueAPI", "CountHistoryAPI"],
             "components": {
                 "backend": "ManagementBackend",
                 "db": "ManagementPostgreSQL"
@@ -120,7 +130,7 @@
             "type": "MSA.Service",
             "name": "count-processing-service",
             "description": "Service for processing count value operations.",
-            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI", "CountValueAPI"],
+            "providing-interfaces": ["InternalCountValueAPI", "ExternalCountUpdateAPI", "CountValueAPI", "CountHistoryAPI"],
             "required-interfaces": [],
             "components": {
                 "backend": "ProcessingBackend",
@@ -138,7 +148,7 @@
             "type": "MSA.System",
             "name": "CountManagementSystem",
             "description": "Root system for Count Management and Processing.",
-            "providing-interfaces": ["CountItemAPI", "ExternalCountUpdateAPI", "CountItemManagementUI", "CountValueAPI", "CountItemMonitoringUI"],
+            "providing-interfaces": ["CountItemAPI", "ExternalCountUpdateAPI", "CountItemManagementUI", "CountValueAPI", "CountItemMonitoringUI", "CountHistoryAPI", "CountItemHistoryUI"],
             "required-interfaces": [],
             "components": {
                 "management": "count-management-service",
@@ -149,6 +159,11 @@
                     "from": "management",
                     "to": "processing",
                     "interface": "InternalCountValueAPI"
+                },
+                {
+                    "from": "management",
+                    "to": "processing",
+                    "interface": "CountHistoryAPI"
                 }
             ]
         }

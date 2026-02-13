@@ -77,6 +77,25 @@ func (h *HTTPHandler) GetItemValueUI(c *gin.Context) {
 	c.String(http.StatusOK, "%d", value)
 }
 
+func (h *HTTPHandler) GetItemHistoryUI(c *gin.Context) {
+	id := c.Param("id")
+	history, err := h.service.GetItemHistory(c.Request.Context(), id)
+	if err != nil {
+		status := h.mapDomainError(err)
+		c.HTML(status, "error_message.html", gin.H{"Message": err.Error()})
+		return
+	}
+
+	if len(history) == 0 {
+		c.HTML(http.StatusOK, "empty_history.html", nil)
+		return
+	}
+
+	c.HTML(http.StatusOK, "history_table.html", gin.H{
+		"History": history,
+	})
+}
+
 func (h *HTTPHandler) UpdateItemUI(c *gin.Context) {
 	id := c.Param("id")
 	name := c.PostForm("name")

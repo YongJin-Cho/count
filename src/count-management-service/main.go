@@ -67,6 +67,7 @@ func main() {
 		ui.DELETE("/count-items/:id", handler.DeleteItemUI)
 		ui.PUT("/counts/:id", handler.UpdateItemUI)
 		ui.GET("/counts/:id/value", handler.GetItemValueUI)
+		ui.GET("/counts/:id/history", handler.GetItemHistoryUI)
 	}
 
 	// External API Endpoints

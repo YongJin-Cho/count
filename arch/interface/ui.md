@@ -6,9 +6,10 @@ This document identifies the UI screens and user flows for the Count system, inc
 
 | UI ID | Screen Name | Key Features | Related User Story |
 |-------|-------------|--------------|-------------------|
-| `CountItemManagementUI` | Count Item Management Dashboard | - List all registered count items (Name, Description, **Current Value**)<br>- **Display real-time/updated values for all items**<br>- Display empty state when no items exist<br>- Form to register a new count item (Unique Name, Optional Description)<br>- Inline deletion of count items via HTMX | FR-001-01, FR-001-02, FR-001-04, **FR-003-02** |
+| `CountItemManagementUI` | Count Item Management Dashboard | - List all registered count items (Name, Description, **Current Value**)<br>- **Display real-time/updated values for all items**<br>- Display empty state when no items exist<br>- Form to register a new count item (Unique Name, Optional Description)<br>- Inline deletion of count items via HTMX<br>- **Link to view change history for each item** | FR-001-01, FR-001-02, FR-001-04, FR-003-02, **FR-004-02** |
 | `CountItemUpdateUI` | Count Item Edit Screen | - Form pre-filled with existing count item details<br>- Update name and description<br>- Validation and error message display | FR-001-03 |
 | `CountItemMonitoringUI` | Specific Count Monitoring UI | - Display current value of a specific count item<br>- Real-time value updates via dedicated HTML fragment | FR-003-01 |
+| `CountItemHistoryUI` | Count Item History Screen | - Display historical log of value changes for a specific item<br>- Show timestamp, change type, amount, and source for each entry<br>- List logs in descending chronological order | FR-004-02 |
 
 ## User Flows
 
@@ -28,3 +29,7 @@ Allows users to modify the metadata of an existing counter.
 Allows users to monitor the current state of counters in real-time.
 - **Path (Dashboard)**: `CountItemManagementUI` (View list with values) → (Auto-refresh) → `CountItemManagementUI` (Updated values reflected)
 - **Path (Specific)**: `CountItemManagementUI` (Select Item) → `CountItemMonitoringUI` (View specific real-time value)
+
+### 5. Count History Inquiry Flow
+Allows users to view the audit trail and change history of a specific counter.
+- **Path**: `CountItemManagementUI` (Select History) → `CountItemHistoryUI` (View history table)

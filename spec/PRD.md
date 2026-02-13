@@ -13,6 +13,9 @@ The "Count" system aims to provide a robust and scalable platform for managing c
 - **FR-003: Count Value Retrieval**
   - Summary: Allows users and external systems to retrieve the current value of a specific counter or all counters via API or UI.
   - Detailed Spec: [spec/FR-003-count-value-retrieval.md](FR-003-count-value-retrieval.md)
+- **FR-004: Count Change History Logging and Inquiry**
+  - Summary: Log every count update event (source, timestamp, change amount) and provide a way to query this history for audit trail and time-series analysis.
+  - Detailed Spec: [spec/FR-004-count-history.md](FR-004-count-history.md)
 
 ## Quality Requirement List
 - **QR-001: Performance and Reliability**

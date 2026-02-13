@@ -1,0 +1,136 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CountHistoryAPI",
+    "version": "1.0.0",
+    "description": "API to retrieve the change history (audit trail) for count items. This interface is part of the audit trail functionality (FR-004-02)."
+  },
+  "servers": [
+    {
+      "url": "/api/v1",
+      "description": "Base path for Count History API"
+    }
+  ],
+  "paths": {
+    "/counts/{id}/history": {
+      "get": {
+        "summary": "Retrieve count change history",
+        "description": "Returns a list of log entries for a specific count item, recording every modification (increase, decrease, reset). Logs are ordered by timestamp in descending order (newest first). (FR-004-02-01)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The unique identifier of the count item.",
+            "schema": {
+              "type": "string"
+            },
+            "example": "count-123"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved the history logs.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CountLog"
+                  }
+                },
+                "examples": {
+                  "standard": {
+                    "summary": "Example history response",
+                    "value": [
+                      {
+                        "timestamp": "2024-05-20T14:30:00Z",
+                        "type": "increase",
+                        "change": 1,
+                        "source": "source-A"
+                      },
+                      {
+                        "timestamp": "2024-05-20T14:28:00Z",
+                        "type": "reset",
+                        "change": -10,
+                        "source": "source-C"
+                      },
+                      {
+                        "timestamp": "2024-05-20T14:25:00Z",
+                        "type": "decrease",
+                        "change": -1,
+                        "source": "source-B"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "The specified count item does not exist. (FR-004-02-03)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "example": {
+                  "error": "Count item with ID 'invalid-id' not found."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CountLog": {
+        "type": "object",
+        "required": [
+          "timestamp",
+          "type",
+          "change",
+          "source"
+        ],
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The ISO8601 formatted date and time when the change occurred."
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "increase",
+              "decrease",
+              "reset"
+            ],
+            "description": "The type of operation performed on the count value."
+          },
+          "change": {
+            "type": "integer",
+            "description": "The amount of change applied. For reset, this represents the value difference from the previous value to zero."
+          },
+          "source": {
+            "type": "string",
+            "description": "The identifier of the source (e.g., system user, external system) that initiated the change."
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "A human-readable error message."
+          }
+        }
+      }
+    }
+  }
+}

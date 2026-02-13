@@ -12,4 +12,5 @@ type CountItemService interface {
 	DeleteItem(ctx context.Context, id string) error
 	UpdateItem(ctx context.Context, id, name, description string) (*domain.CountItem, error)
 	GetItemValue(ctx context.Context, id string) (int, error)
+	GetItemHistory(ctx context.Context, id string) ([]domain.HistoryEntry, error)
 }

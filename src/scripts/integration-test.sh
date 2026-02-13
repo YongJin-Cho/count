@@ -223,6 +223,40 @@ else
   exit 1
 fi
 
+# 11. Test History Logging and Inquiry
+echo "Testing History Logging and Inquiry..."
+
+# The previous operations (increase to 11, etc.) should have already generated history logs.
+# Let's generate one more specific log for clear verification.
+echo "Generating an additional log entry..."
+curl -s -X POST "$PROC_URL/api/v1/counts/$ITEM_ID/increase" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 5}' > /dev/null
+
+# 11.1 Verify History via API (Processing Service)
+echo "Checking history via API..."
+HISTORY_API_RESPONSE=$(curl -s "$PROC_URL/api/v1/counts/$ITEM_ID/history")
+echo "History API response: $HISTORY_API_RESPONSE"
+# We expect to find 'increase' and amount '5' in the history.
+if [[ "$HISTORY_API_RESPONSE" == *"increase"* ]] && [[ "$HISTORY_API_RESPONSE" == *"5"* ]]; then
+  echo "SUCCESS: History log found in API response."
+else
+  echo "FAILURE: History log not found or incorrect in API response."
+  exit 1
+fi
+
+# 11.2 Verify History via UI (Management Service)
+echo "Checking history via UI..."
+HISTORY_UI_RESPONSE=$(curl -s "$MGMT_URL/ui/counts/$ITEM_ID/history")
+# The UI should return HTML fragment with history details.
+if [[ "$HISTORY_UI_RESPONSE" == *"increase"* ]] && [[ "$HISTORY_UI_RESPONSE" == *"5"* ]]; then
+  echo "SUCCESS: History log found in UI response."
+else
+  echo "FAILURE: History log not found or incorrect in UI response."
+  echo "Response: $HISTORY_UI_RESPONSE"
+  exit 1
+fi
+
 # Clean up
 curl -s -X DELETE "$MGMT_URL/api/v1/count-items/$ITEM_ID" > /dev/null
 

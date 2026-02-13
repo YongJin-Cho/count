@@ -31,6 +31,7 @@ func (h *CountValueHandler) RegisterRoutes(r *gin.Engine) {
 		external.POST("/:itemId/increase", h.Increase)
 		external.POST("/:itemId/decrease", h.Decrease)
 		external.POST("/:itemId/reset", h.Reset)
+		external.GET("/:itemId/history", h.GetHistory)
 	}
 }
 
@@ -75,7 +76,8 @@ func (h *CountValueHandler) GetAllExternal(c *gin.Context) {
 }
 
 type UpdateRequest struct {
-	Amount int `json:"amount"`
+	Amount int    `json:"amount"`
+	Source string `json:"source"`
 }
 
 func (h *CountValueHandler) Increase(c *gin.Context) {
@@ -89,7 +91,7 @@ func (h *CountValueHandler) Increase(c *gin.Context) {
 		req.Amount = 1
 	}
 
-	count, err := h.useCase.Increase(c.Request.Context(), itemID, req.Amount)
+	count, err := h.useCase.Increase(c.Request.Context(), itemID, req.Amount, req.Source)
 	if err == domain.ErrNotFound {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -113,7 +115,7 @@ func (h *CountValueHandler) Decrease(c *gin.Context) {
 		req.Amount = 1
 	}
 
-	count, err := h.useCase.Decrease(c.Request.Context(), itemID, req.Amount)
+	count, err := h.useCase.Decrease(c.Request.Context(), itemID, req.Amount, req.Source)
 	if err == domain.ErrNotFound {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -126,9 +128,16 @@ func (h *CountValueHandler) Decrease(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"itemId": count.ItemID, "value": count.CurrentValue})
 }
 
+type ResetRequest struct {
+	Source string `json:"source"`
+}
+
 func (h *CountValueHandler) Reset(c *gin.Context) {
 	itemID := c.Param("itemId")
-	count, err := h.useCase.Reset(c.Request.Context(), itemID)
+	var req ResetRequest
+	_ = c.ShouldBindJSON(&req)
+
+	count, err := h.useCase.Reset(c.Request.Context(), itemID, req.Source)
 	if err == domain.ErrNotFound {
 		c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return
@@ -139,6 +148,21 @@ func (h *CountValueHandler) Reset(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"itemId": count.ItemID, "value": count.CurrentValue})
+}
+
+func (h *CountValueHandler) GetHistory(c *gin.Context) {
+	itemID := c.Param("itemId")
+	history, err := h.useCase.GetHistory(c.Request.Context(), itemID)
+	if err == domain.ErrNotFound {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Count item with ID '" + itemID + "' not found."})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, history)
 }
 
 type InitializeRequest struct {

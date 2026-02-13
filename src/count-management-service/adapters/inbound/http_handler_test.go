@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 type MockService struct {
@@ -19,6 +20,7 @@ type MockService struct {
 	DeleteItemFunc         func(ctx context.Context, id string) error
 	UpdateItemFunc         func(ctx context.Context, id, name, description string) (*domain.CountItem, error)
 	GetItemValueFunc       func(ctx context.Context, id string) (int, error)
+	GetItemHistoryFunc     func(ctx context.Context, id string) ([]domain.HistoryEntry, error)
 }
 
 func (m *MockService) RegisterItem(ctx context.Context, name, description string) (*domain.CountItem, error) {
@@ -38,6 +40,9 @@ func (m *MockService) UpdateItem(ctx context.Context, id, name, description stri
 }
 func (m *MockService) GetItemValue(ctx context.Context, id string) (int, error) {
 	return m.GetItemValueFunc(ctx, id)
+}
+func (m *MockService) GetItemHistory(ctx context.Context, id string) ([]domain.HistoryEntry, error) {
+	return m.GetItemHistoryFunc(ctx, id)
 }
 
 func TestRegisterItemUI(t *testing.T) {
@@ -420,6 +425,72 @@ func TestDeleteItemAPI(t *testing.T) {
 
 		if w.Code != http.StatusNoContent {
 			t.Errorf("expected 204, got %d", w.Code)
+		}
+	})
+}
+
+func TestGetItemHistoryUI(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+	mockSvc := &MockService{}
+	handler := inbound.NewHTTPHandler(mockSvc)
+
+	r := gin.New()
+	r.LoadHTMLGlob("../../templates/*.html")
+	r.GET("/ui/counts/:id/history", handler.GetItemHistoryUI)
+
+	t.Run("success with records", func(t *testing.T) {
+		mockSvc.GetItemHistoryFunc = func(ctx context.Context, id string) ([]domain.HistoryEntry, error) {
+			return []domain.HistoryEntry{
+				{Type: "increase", Change: 5, Source: "test", Timestamp: time.Now()},
+			}, nil
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/ui/counts/123/history", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected 200, got %d", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "history-table") {
+			t.Error("response should contain history table")
+		}
+		if !strings.Contains(w.Body.String(), "increase") || !strings.Contains(w.Body.String(), "+5") {
+			t.Error("response should contain history data")
+		}
+	})
+
+	t.Run("empty history", func(t *testing.T) {
+		mockSvc.GetItemHistoryFunc = func(ctx context.Context, id string) ([]domain.HistoryEntry, error) {
+			return []domain.HistoryEntry{}, nil
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/ui/counts/123/history", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Errorf("expected 200, got %d", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "empty-history") {
+			t.Error("response should contain empty state")
+		}
+	})
+
+	t.Run("not found", func(t *testing.T) {
+		mockSvc.GetItemHistoryFunc = func(ctx context.Context, id string) ([]domain.HistoryEntry, error) {
+			return nil, domain.ErrItemNotFound
+		}
+
+		w := httptest.NewRecorder()
+		req, _ := http.NewRequest("GET", "/ui/counts/non-existent/history", nil)
+		r.ServeHTTP(w, req)
+
+		if w.Code != http.StatusNotFound {
+			t.Errorf("expected 404, got %d", w.Code)
+		}
+		if !strings.Contains(w.Body.String(), "item not found") {
+			t.Error("response should contain error message")
 		}
 	})
 }

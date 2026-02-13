@@ -163,6 +163,13 @@
                       "className": "text-indigo-600 hover:text-indigo-900 font-medium"
                     },
                     {
+                      "id": "btn-history-{id}",
+                      "type": "Link",
+                      "label": "History",
+                      "url": "/ui/counts/{id}/history",
+                      "className": "text-green-600 hover:text-green-900 font-medium"
+                    },
+                    {
                       "id": "btn-delete-{id}",
                       "type": "Button",
                       "label": "Delete",

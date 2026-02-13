@@ -1,0 +1,62 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "CountHistoryUIAPI",
+    "description": "UI APIs for count history inquiry, designed for HTMX-based frontends. This spec covers endpoints for retrieving historical logs of count modifications.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/ui/counts/{id}/history": {
+      "get": {
+        "operationId": "GetCountItemHistoryAPI",
+        "summary": "Retrieve count history HTML fragment",
+        "description": "Returns an HTML fragment containing either a table (`history-table`) with chronological change logs (timestamp, operation, amount, source) or an empty state message (`empty-history`) if no records exist.\n\n### HTMX Specs (from ui-api.md):\n- **Trigger**: `load`\n- **Target**: `#history-table-container`\n- **Swap**: `innerHTML`\n- **UI Context**: CountItemHistoryUI (arch/interface/ui-api/CountItemHistoryUI.md)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "The unique ID of the count item to retrieve history for.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful retrieval of the history fragment.",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string",
+                  "description": "HTML fragment containing history table or empty state."
+                },
+                "examples": {
+                  "historyTable": {
+                    "summary": "History table fragment",
+                    "value": "<table id=\"history-table\" class=\"min-w-full divide-y divide-gray-200\">\n  <thead>\n    <tr>\n      <th class=\"px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider\">Timestamp</th>\n      <th class=\"px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider\">Operation</th>\n      <th class=\"px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider\">Amount</th>\n      <th class=\"px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider\">Source</th>\n    </tr>\n  </thead>\n  <tbody class=\"bg-white divide-y divide-gray-200\">\n    <tr>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">2026-02-13T10:00:00Z</td>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900\">increase</td>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">+1</td>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">source-A</td>\n    </tr>\n    <tr>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">2026-02-13T09:55:00Z</td>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900\">decrease</td>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">-1</td>\n      <td class=\"px-6 py-4 whitespace-nowrap text-sm text-gray-500\">source-B</td>\n    </tr>\n  </tbody>\n</table>"
+                  },
+                  "emptyHistory": {
+                    "summary": "Empty history fragment",
+                    "value": "<div id=\"empty-history\" class=\"text-center py-12\">\n  <p class=\"text-gray-500 text-sm font-medium\">No history records found for this item.</p>\n</div>"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Count item not found. Returns an error message fragment (as per FR-004-02-03).",
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<div class=\"error-message bg-red-50 p-4 rounded-md\">\n  <p class=\"text-sm text-red-700\">Error: Count item with the specified ID was not found.</p>\n</div>"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
